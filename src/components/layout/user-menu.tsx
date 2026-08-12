@@ -80,14 +80,9 @@ export function UserMenu({ profile }: { profile: SessionProfile }) {
             Dashboard
           </DropdownMenuItem>
 
-          <DropdownMenuItem render={<Link href="/car" />}>
-            Carro
+         <DropdownMenuItem render={<Link href="/dados" />}>
+            Dados
           </DropdownMenuItem>
-
-          <DropdownMenuItem render={<Link href="/driver" />}>
-            Piloto
-          </DropdownMenuItem>
-
           <DropdownMenuItem render={<Link href="/account/profile" />}>
             Minha conta
           </DropdownMenuItem>

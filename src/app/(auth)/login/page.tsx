@@ -12,7 +12,7 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle className="text-2xl">GPRO Manager</CardTitle>
+        <CardTitle className="text-2xl">ABR-FGG</CardTitle>
         <CardDescription>Faça login para acessar o sistema</CardDescription>
       </CardHeader>
 

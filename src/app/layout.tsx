@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-import './globals.css'
 import { Toaster } from '@/components/ui/sonner'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'GPRO Manager',
-  description: 'Gerenciador para o jogo GPRO'
+  title: 'ABR-FGG',
+  description: 'Gerenciador para o jogo GPRO da ABR'
 }
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className="min-h-screen bg-background font-sans antialiased">
+      <body className="min-h-screen bg-background text-foreground antialiased">
         {children}
         <Toaster richColors position="top-right" />
       </body>
