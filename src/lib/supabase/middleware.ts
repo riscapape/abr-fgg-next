@@ -34,9 +34,29 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   const publicPaths = ['/login', '/forgot-password', '/auth/callback']
-
   const isPublic = publicPaths.some(path => pathname.startsWith(path))
 
+  // Verifica se o usuário está ativo
+  let isActive = true
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_active')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    isActive = profile?.is_active !== false
+  }
+
+  // Usuário desativado tentando acessar área protegida -> volta pro login
+  if (user && !isActive && !isPublic) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    url.search = '?error=disabled'
+    return NextResponse.redirect(url)
+  }
+
+  // Não logado tentando acessar área protegida -> login
   if (!user && !isPublic) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
@@ -44,7 +64,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && pathname === '/login') {
+  // Logado e ativo no login -> dashboard
+  if (user && isActive && pathname === '/login') {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     url.search = ''

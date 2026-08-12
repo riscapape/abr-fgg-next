@@ -34,10 +34,14 @@ export function LoginForm() {
 
     setLoading(false)
 
-    if (error) {
-      toast.error(`Erro ao entrar: ${error.message}`)
+       if (error) {
+      const message = /banned/i.test(error.message)
+        ? 'Conta desativada. Entre em contato com o administrador.'
+        : `Erro ao entrar: ${error.message}`
+      toast.error(message)
       return
     }
+     
 
     toast.success('Login realizado com sucesso.')
     router.replace('/dashboard')

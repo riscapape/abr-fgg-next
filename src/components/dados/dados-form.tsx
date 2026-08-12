@@ -14,7 +14,9 @@ import {
   WEATHER_OPTIONS,
   RACE_TEMP_SLOTS,
   MAX_PART_LEVEL,
-  calculateDriverTotal
+  LIMITS,
+  calculateDriverTotal,
+  validateRange
 } from '@/lib/gpro/constants'
 import type { CarPartKey, DriverKey, Weather } from '@/lib/gpro/constants'
 
@@ -36,16 +38,24 @@ function Label({ children }: { children: ReactNode }) {
 function NumInput({
   value,
   onChange,
+  min,
+  max,
+  step,
   className
 }: {
   value: string
   onChange: (v: string) => void
+  min?: number
+  max?: number
+  step?: number | string
   className?: string
 }) {
   return (
     <Input
       type="number"
-      step="any"
+      min={min}
+      max={max}
+      step={step}
       placeholder="0"
       className={cn('h-8 w-20', className)}
       value={value}
@@ -172,18 +182,113 @@ export function DadosForm({
   for (const a of DRIVER_ATTRIBUTES) parsedDriver[a.key] = parseNum(driverAttrs[a.key])
   const driverTotal = calculateDriverTotal(parsedDriver)
 
+  // ===== Validação completa =====
+  function validateAll(): string | null {
+    // Valida dados da corrida
+    const airTempNum = parseNum(airTemp)
+    if (airTempNum !== null) {
+      const error = validateRange(airTempNum, LIMITS.AIR_TEMP.min, LIMITS.AIR_TEMP.max, 'Temperatura')
+      if (error) return error
+    }
+
+    const ctRiskNum = parseNum(ctRisk)
+    if (ctRiskNum !== null) {
+      const error = validateRange(ctRiskNum, LIMITS.CT_RISK.min, LIMITS.CT_RISK.max, 'Risco CT')
+      if (error) return error
+    }
+
+    const pitTimeNum = parseNum(pitTime)
+    if (pitTimeNum !== null) {
+      const error = validateRange(pitTimeNum, LIMITS.PIT_TIME.min, LIMITS.PIT_TIME.max, 'Tempo do pit')
+      if (error) return error
+    }
+
+    const q1TempNum = parseNum(q1Temp)
+    if (q1TempNum !== null) {
+      const error = validateRange(q1TempNum, LIMITS.RACE_TEMP.min, LIMITS.RACE_TEMP.max, 'Temperatura Q1')
+      if (error) return error
+    }
+
+    const q2TempNum = parseNum(q2Temp)
+    if (q2TempNum !== null) {
+      const error = validateRange(q2TempNum, LIMITS.RACE_TEMP.min, LIMITS.RACE_TEMP.max, 'Temperatura Q2')
+      if (error) return error
+    }
+
+    const raceTempNum = parseNum(raceTemp)
+    if (raceTempNum !== null) {
+      const error = validateRange(raceTempNum, LIMITS.RACE_TEMP.min, LIMITS.RACE_TEMP.max, 'Temperatura Corrida')
+      if (error) return error
+    }
+
+    const phaPNum = parseNum(phaP)
+    if (phaPNum !== null) {
+      const error = validateRange(phaPNum, LIMITS.PHA.min, LIMITS.PHA.max, 'PHA P')
+      if (error) return error
+    }
+
+    const phaHNum = parseNum(phaH)
+    if (phaHNum !== null) {
+      const error = validateRange(phaHNum, LIMITS.PHA.min, LIMITS.PHA.max, 'PHA H')
+      if (error) return error
+    }
+
+    const phaANum = parseNum(phaA)
+    if (phaANum !== null) {
+      const error = validateRange(phaANum, LIMITS.PHA.min, LIMITS.PHA.max, 'PHA A')
+      if (error) return error
+    }
+
+    // Valida temperaturas dos slots
+    for (let i = 0; i < RACE_TEMP_SLOTS.length; i++) {
+      const slotMin = parseNum(slots[i].min)
+      const slotMax = parseNum(slots[i].max)
+      
+      if (slotMin !== null) {
+        const error = validateRange(slotMin, LIMITS.RACE_TEMP.min, LIMITS.RACE_TEMP.max, `${RACE_TEMP_SLOTS[i].label} Min`)
+        if (error) return error
+      }
+      
+      if (slotMax !== null) {
+        const error = validateRange(slotMax, LIMITS.RACE_TEMP.min, LIMITS.RACE_TEMP.max, `${RACE_TEMP_SLOTS[i].label} Max`)
+        if (error) return error
+      }
+    }
+
+    // Valida carro
+    for (const p of CAR_PARTS) {
+      const wear = parseNum(carParts[p.key].wear)
+      if (wear !== null) {
+        const error = validateRange(wear, LIMITS.PART_WEAR.min, LIMITS.PART_WEAR.max, `${p.label} Desgaste`)
+        if (error) return error
+      }
+    }
+
+    // Valida piloto
+    for (const a of DRIVER_ATTRIBUTES) {
+      const value = parseNum(driverAttrs[a.key])
+      if (value !== null) {
+        const error = validateRange(value, a.min, a.max, a.label)
+        if (error) return error
+      }
+    }
+
+    return null
+  }
+
   // ===== Salvar tudo de uma vez =====
   async function handleSave() {
+    const validationError = validateAll()
+    if (validationError) {
+      toast.error(validationError)
+      return
+    }
+
     setLoading(true)
 
     const carPayload: Record<string, unknown> = { user_id: userId }
     for (const p of CAR_PARTS) {
       const wear = parseNum(carParts[p.key].wear) ?? 0
-      if (wear < 0 || wear > 100) {
-        toast.error(`Desgaste inválido em ${p.label}. Use 0 a 100.`)
-        setLoading(false)
-        return
-      }
       carPayload[`${p.key}_lvl`] = carParts[p.key].lvl
       carPayload[`${p.key}_wear`] = wear
     }
@@ -273,17 +378,37 @@ export function DadosForm({
 
         <div className="space-y-1">
           <Label>Temperatura</Label>
-          <NumInput className="w-full" value={airTemp} onChange={setAirTemp} />
+          <NumInput
+            className="w-full"
+            value={airTemp}
+            onChange={setAirTemp}
+            min={LIMITS.AIR_TEMP.min}
+            max={LIMITS.AIR_TEMP.max}
+            step={LIMITS.AIR_TEMP.step}
+          />
         </div>
 
         <div className="space-y-1">
           <Label>Risco CT</Label>
-          <NumInput className="w-full" value={ctRisk} onChange={setCtRisk} />
+          <NumInput
+            className="w-full"
+            value={ctRisk}
+            onChange={setCtRisk}
+            min={LIMITS.CT_RISK.min}
+            max={LIMITS.CT_RISK.max}
+          />
         </div>
 
         <div className="space-y-1">
           <Label>Tempo do pit</Label>
-          <NumInput className="w-full" value={pitTime} onChange={setPitTime} />
+          <NumInput
+            className="w-full"
+            value={pitTime}
+            onChange={setPitTime}
+            min={LIMITS.PIT_TIME.min}
+            max={LIMITS.PIT_TIME.max}
+            step={LIMITS.PIT_TIME.step}
+          />
         </div>
       </div>
 
@@ -304,13 +429,31 @@ export function DadosForm({
                 <tbody>
                   <tr className="border-b">
                     <td className="px-2 py-1.5">
-                      <NumInput className="w-full" value={q1Temp} onChange={setQ1Temp} />
+                      <NumInput
+                        className="w-full"
+                        value={q1Temp}
+                        onChange={setQ1Temp}
+                        min={LIMITS.RACE_TEMP.min}
+                        max={LIMITS.RACE_TEMP.max}
+                      />
                     </td>
                     <td className="px-2 py-1.5">
-                      <NumInput className="w-full" value={q2Temp} onChange={setQ2Temp} />
+                      <NumInput
+                        className="w-full"
+                        value={q2Temp}
+                        onChange={setQ2Temp}
+                        min={LIMITS.RACE_TEMP.min}
+                        max={LIMITS.RACE_TEMP.max}
+                      />
                     </td>
                     <td className="px-2 py-1.5">
-                      <NumInput className="w-full" value={raceTemp} onChange={setRaceTemp} />
+                      <NumInput
+                        className="w-full"
+                        value={raceTemp}
+                        onChange={setRaceTemp}
+                        min={LIMITS.RACE_TEMP.min}
+                        max={LIMITS.RACE_TEMP.max}
+                      />
                     </td>
                   </tr>
                   <tr>
@@ -343,13 +486,31 @@ export function DadosForm({
                 <tbody>
                   <tr>
                     <td className="px-2 py-1.5">
-                      <NumInput className="w-full" value={phaP} onChange={setPhaP} />
+                      <NumInput
+                        className="w-full"
+                        value={phaP}
+                        onChange={setPhaP}
+                        min={LIMITS.PHA.min}
+                        max={LIMITS.PHA.max}
+                      />
                     </td>
                     <td className="px-2 py-1.5">
-                      <NumInput className="w-full" value={phaH} onChange={setPhaH} />
+                      <NumInput
+                        className="w-full"
+                        value={phaH}
+                        onChange={setPhaH}
+                        min={LIMITS.PHA.min}
+                        max={LIMITS.PHA.max}
+                      />
                     </td>
                     <td className="px-2 py-1.5">
-                      <NumInput className="w-full" value={phaA} onChange={setPhaA} />
+                      <NumInput
+                        className="w-full"
+                        value={phaA}
+                        onChange={setPhaA}
+                        min={LIMITS.PHA.min}
+                        max={LIMITS.PHA.max}
+                      />
                     </td>
                   </tr>
                 </tbody>
@@ -373,6 +534,8 @@ export function DadosForm({
                         className="w-full"
                         value={slots[i].min}
                         onChange={v => updateSlot(i, 'min', v)}
+                        min={LIMITS.RACE_TEMP.min}
+                        max={LIMITS.RACE_TEMP.max}
                       />
                     </div>
                     <div className="space-y-1">
@@ -381,6 +544,8 @@ export function DadosForm({
                         className="w-full"
                         value={slots[i].max}
                         onChange={v => updateSlot(i, 'max', v)}
+                        min={LIMITS.RACE_TEMP.min}
+                        max={LIMITS.RACE_TEMP.max}
                       />
                     </div>
                   </div>
@@ -437,7 +602,7 @@ export function DadosForm({
                         onChange={e => updateCarPart(part.key, 'lvl', Number(e.target.value))}
                       >
                         {Array.from({ length: MAX_PART_LEVEL }, (_, i) => i + 1).map(n => (
-                          <option key={n} value={n}>
+                         <option key={n} value={n}>
                             {n}
                           </option>
                         ))}
@@ -448,6 +613,8 @@ export function DadosForm({
                         className="w-20"
                         value={carParts[part.key].wear}
                         onChange={v => updateCarPart(part.key, 'wear', v)}
+                        min={LIMITS.PART_WEAR.min}
+                        max={LIMITS.PART_WEAR.max}
                       />
                     </td>
                   </tr>
@@ -477,6 +644,8 @@ export function DadosForm({
                         className="w-20"
                         value={driverAttrs[attr.key]}
                         onChange={v => updateDriverAttr(attr.key, v)}
+                        min={attr.min}
+                        max={attr.max}
                       />
                     </td>
                   </tr>

@@ -1,0 +1,112 @@
+[
+  {
+    "id": "pipirelli",
+    "nome": "Pipirelli",
+    "seco": 2,
+    "molhado": 2,
+    "temperatura": 31,
+    "durabilidade": 2,
+    "aquecimento": 7,
+    "preco": 250000,
+    "coefDurab": 1.05,
+    "coefTemp": 0
+  },
+  {
+    "id": "avonn",
+    "nome": "Avonn",
+    "seco": 1,
+    "molhado": 7,
+    "temperatura": 17,
+    "durabilidade": 8,
+    "aquecimento": 5,
+    "preco": 1620000,
+    "coefDurab": 1.397,
+    "coefTemp": 0.02
+  },
+  {
+    "id": "yokomama",
+    "nome": "Yokomama",
+    "seco":  3,
+    "molhado": 1,
+    "temperatura": 27,
+    "durabilidade": 7,
+    "aquecimento": 3,
+    "preco": 2610000,
+    "coefDurab": 1.331,
+    "coefTemp": 0.05
+  },
+  {
+    "id": "dunnolop",
+    "nome": "Dunnolop",
+    "seco": 4,
+    "molhado": 3,
+    "temperatura": 21,
+    "durabilidade": 4,
+    "aquecimento": 6,
+    "preco": 2610000,
+    "coefDurab": 1.154,
+    "coefTemp": 0.07
+  },
+  {
+    "id": "contimental",
+    "nome": "Contimental",
+    "seco": 7,
+    "molhado": 2,
+    "temperatura": 37,
+    "durabilidade": 6,
+    "aquecimento": 8,
+    "preco": 3330000,
+    "coefDurab": 1.276,
+    "coefTemp": 0.029
+  },
+  {
+    "id": "badyear",
+    "nome": "Badyear",
+    "seco": 5,
+    "molhado": 6,
+    "temperatura": 23,
+    "durabilidade": 5,
+    "aquecimento": 4,
+    "preco": 4770000,
+    "coefDurab": 1.21,
+    "coefTemp": 0.09
+  },
+  {
+    "id": "hancock",
+    "nome": "Hancock",
+    "seco": 7,
+    "molhado": 4,
+    "temperatura": 11,
+    "durabilidade": 1,
+    "aquecimento": 2,
+    "preco": 4440000,
+    "coefDurab": 1,
+    "coefTemp": 0.11
+  },
+  {
+    "id": "michelini",
+    "nome": "Michelini",
+    "seco": 8,
+    "molhado": 8,
+    "temperatura": 15,
+    "durabilidade": 2,
+    "aquecimento": 1,
+    "preco": 8000000,
+    "coefDurab": 1.05,
+    "coefTemp": 0.075
+  },
+  {
+    "id": "bridgerock",
+    "nome": "Bridgerock",
+    "seco": 6,
+    "molhado": 5,
+    "temperatura": 26,
+    "durabilidade": 8,
+    "aquecimento": 5,
+    "preco": 8000000,
+    "coefDurab": 1.397,
+    "coefTemp": 0.04
+  }
+  
+]
+

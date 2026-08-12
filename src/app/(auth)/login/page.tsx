@@ -8,7 +8,14 @@ import {
 } from '@/components/ui/card'
 import { LoginForm } from '@/components/auth/login-form'
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const params = await searchParams
+  const isDisabled = params.error === 'disabled'
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
@@ -17,6 +24,12 @@ export default function LoginPage() {
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {isDisabled && (
+          <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+            Conta desativada. Entre em contato com o administrador do sistema.
+          </div>
+        )}
+
         <LoginForm />
 
         <div className="text-sm">
