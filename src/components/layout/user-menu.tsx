@@ -87,11 +87,16 @@ export function UserMenu({ profile }: { profile: SessionProfile }) {
             Minha conta
           </DropdownMenuItem>
 
-          {profile.role === 'owner' && (
-            <DropdownMenuItem render={<Link href="/admin/users" />}>
-              Administração
-            </DropdownMenuItem>
-          )}
+         {profile.role === 'owner' && (
+  <>
+    <DropdownMenuItem render={<Link href="/admin/users" />}>
+      Usuários
+    </DropdownMenuItem>
+    <DropdownMenuItem render={<Link href="/admin/seasons" />}>
+      Temporadas
+    </DropdownMenuItem>
+  </>
+)}
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator />

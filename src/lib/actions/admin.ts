@@ -218,3 +218,85 @@ export async function setUserActive(userId: string, isActive: boolean) {
 
   revalidatePath('/admin/users')
 }
+
+import { computeRaceDates, toISODate } from '@/lib/gpro/season'
+
+// Cria uma nova temporada com 17 corridas e datas calculadas
+export async function createSeason(formData: FormData) {
+  await requireOwner()
+
+  const number = Number(formData.get('number'))
+  const startDate = String(formData.get('start_date') || '')
+  const testTrackId = String(formData.get('test_track_id') || '')
+  const activate = formData.get('activate') === 'on'
+
+  if (!number || number < 1) {
+    throw new Error('Número da temporada inválido.')
+  }
+  if (!startDate) {
+    throw new Error('Informe a data da 1ª corrida.')
+  }
+  if (!testTrackId) {
+    throw new Error('Selecione a pista de testes.')
+  }
+
+  // Coleta as 17 pistas
+  const races: string[] = []
+  for (let i = 1; i <= 17; i++) {
+    const trackId = String(formData.get(`race_${i}`) || '')
+    if (!trackId) {
+      throw new Error(`Selecione a pista da corrida ${i}.`)
+    }
+    races.push(trackId)
+  }
+
+  // Calcula as datas (terças e sextas)
+  const dates = computeRaceDates(startDate, 17)
+  if (dates.length !== 17) {
+    throw new Error('Data inicial inválida.')
+  }
+
+  const admin = createAdminClient()
+
+  // Cria a temporada
+  const { data: season, error } = await admin
+    .from('seasons')
+    .insert({
+      number,
+      name: `Temporada ${number}`,
+      test_track_id: testTrackId,
+      start_date: startDate,
+      end_date: toISODate(dates[16]),
+      is_active: false
+    })
+    .select()
+    .single()
+
+  if (error) {
+    throw new Error(`Erro ao criar temporada: ${error.message}`)
+  }
+
+  // Cria as 17 corridas com suas datas
+  const rows = races.map((trackId, i) => ({
+    season_id: season.id,
+    track_id: trackId,
+    race_number: i + 1,
+    race_date: toISODate(dates[i])
+  }))
+
+  const { error: racesError } = await admin.from('season_races').insert(rows)
+
+  if (racesError) {
+    throw new Error(`Erro ao criar calendário: ${racesError.message}`)
+  }
+
+  // Se marcado, ativa esta temporada e desativa as demais
+  if (activate) {
+    await admin.from('seasons').update({ is_active: false }).neq('id', season.id)
+    await admin.from('seasons').update({ is_active: true }).eq('id', season.id)
+  }
+
+  revalidatePath('/admin/seasons')
+  revalidatePath('/dados')
+  revalidatePath('/dashboard')
+}

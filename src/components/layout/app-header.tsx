@@ -21,10 +21,15 @@ export function AppHeader({ profile }: { profile: SessionProfile }) {
   </Link>
 
   {profile.role === 'owner' && (
+  <>
     <Link href="/admin/users" className="text-muted-foreground hover:text-foreground">
-      Administração
+      Usuários
     </Link>
-  )}
+    <Link href="/admin/seasons" className="text-muted-foreground hover:text-foreground">
+      Temporadas
+    </Link>
+  </>
+)}
 </nav>
         </div>
 
