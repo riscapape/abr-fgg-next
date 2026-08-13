@@ -3,51 +3,59 @@ import { UserMenu } from '@/components/layout/user-menu'
 import type { SessionProfile } from '@/types'
 
 export function AppHeader({ profile }: { profile: SessionProfile }) {
+  const links = [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/dados', label: 'Dados' },
+    { href: '/estrategias', label: 'Estratégias' },
+    { href: '/desgaste', label: 'Desgaste' },
+    { href: '/testes', label: 'Testes' },
+    { href: '/setup', label: 'Setup' },
+    ...(profile.role === 'owner'
+      ? [
+          { href: '/admin/users', label: 'Usuários' },
+          { href: '/admin/seasons', label: 'Temporadas' }
+        ]
+      : [])
+  ]
+
   return (
-    <header className="border-b bg-background">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 md:px-6">
-        <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="text-lg font-semibold">
-            ABR-FGG
-          </Link>
+    <header className="sticky top-0 z-40 border-b bg-background">
+      <div className="mx-auto flex h-12 w-full max-w-6xl items-center justify-between px-3 sm:h-14 sm:px-4">
+        <Link
+          href="/dashboard"
+          className="whitespace-nowrap text-base font-semibold"
+        >
+          ABR-FGG
+        </Link>
 
-         <nav className="hidden items-center gap-4 text-sm md:flex">
-  <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
-    Dashboard
-  </Link>
-
-  <Link href="/dados" className="text-muted-foreground hover:text-foreground">
-  Dados
-</Link>
-<Link href="/estrategias" className="text-muted-foreground hover:text-foreground">
-  Estratégias
-</Link>
-
-<Link href="/desgaste" className="text-muted-foreground hover:text-foreground">
-  Desgaste
-</Link>
-<Link href="/testes" className="text-muted-foreground hover:text-foreground">
-  Testes
-</Link>
-<Link href="/setup" className="text-muted-foreground hover:text-foreground">
-  Setup
-</Link>
-
-  {profile.role === 'owner' && (
-  <>
-    <Link href="/admin/users" className="text-muted-foreground hover:text-foreground">
-      Usuários
-    </Link>
-    <Link href="/admin/seasons" className="text-muted-foreground hover:text-foreground">
-      Temporadas
-    </Link>
-  </>
-)}
-</nav>
-        </div>
+        {/* Nav desktop */}
+        <nav className="hidden items-center gap-4 text-sm md:flex">
+          {links.map(l => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
 
         <UserMenu profile={profile} />
       </div>
+
+      {/* Abas roláveis no mobile */}
+      <nav className="flex gap-1 overflow-x-auto border-t px-2 py-1 md:hidden">
+        {links.map(l => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="whitespace-nowrap rounded-md px-2.5 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            {l.label}
+          </Link>
+        ))}
+      </nav>
     </header>
   )
 }

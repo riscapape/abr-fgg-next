@@ -142,3 +142,16 @@
     font-family: var(--font-sans) !important;
   }
 }
+
+@layer base {
+  /* Densidade "planilha": escala tudo (fontes, alturas, paddings em rem) */
+  html {
+    font-size: 14px;
+  }
+
+  /* Números alinhados em tabelas */
+  th,
+  td {
+    font-variant-numeric: tabular-nums;
+  }
+}

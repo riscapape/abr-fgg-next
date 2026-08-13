@@ -234,10 +234,10 @@ export function SetupPlanner({
   return (
     <div className="space-y-6">
       {/* ===== Topo ===== */}
-      <div className="grid gap-4 sm:grid-cols-3">
+            <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
           <span className="text-sm font-medium">Pista</span>
-          <div className="flex h-9 items-center rounded-md border bg-muted/30 px-3 text-sm">
+          <div className="flex h-8 items-center rounded-md border bg-muted/30 px-3 text-sm">
             {track.name}
           </div>
         </div>
@@ -248,7 +248,7 @@ export function SetupPlanner({
             type="number"
             min={-499}
             max={499}
-            className="h-9 w-full"
+            className="h-8 w-20"
             value={wingStr}
             onChange={e => setWingStr(e.target.value)}
             onBlur={() => wingStr === '' && setWingStr('0')}
@@ -257,12 +257,11 @@ export function SetupPlanner({
 
         <div className="space-y-1">
           <span className="text-sm font-medium">Fórmula Analyzer</span>
-          <div className="flex h-9 items-center justify-center rounded-md border bg-muted/30 px-3 text-sm font-semibold">
+          <div className="flex h-8 items-center justify-center rounded-md border bg-muted/30 px-3 text-sm font-semibold">
             {analyzer}
           </div>
         </div>
       </div>
-
       {/* ===== Setups Q1 / Q2 / Corrida ===== */}
       <div className="grid gap-6 lg:grid-cols-3">
         <SetupTabela
@@ -390,7 +389,7 @@ export function SetupPlanner({
                         <td key={field} className="px-2 py-1.5 text-center">
                           <Input
                             type="number"
-                            className="mx-auto h-8 w-20 text-center"
+                            className="h-7 w-12 sm:h-8 sm:w-20"
                             value={rows[a.key][field]}
                             onChange={e =>
                               updateRow(a.key, field, e.target.value)

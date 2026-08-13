@@ -19,18 +19,25 @@ import {
 } from '@/lib/gpro/formulas'
 import { cn } from '@/lib/utils'
 
-const PARTS: { suffix: PartSuffix; key: CarPartKey; label: string }[] = [
-  { suffix: 'Cha', key: 'chassis', label: 'Chassis' },
-  { suffix: 'Mot', key: 'engine', label: 'Motor' },
-  { suffix: 'Asd', key: 'front_wing', label: 'Asa Dianteira' },
-  { suffix: 'Ast', key: 'rear_wing', label: 'Asa Traseira' },
-  { suffix: 'Ass', key: 'underbody', label: 'Assoalho' },
-  { suffix: 'Lat', key: 'sidepods', label: 'Laterais' },
-  { suffix: 'Rad', key: 'radiator', label: 'Radiador' },
-  { suffix: 'Cam', key: 'gearbox', label: 'Câmbio' },
-  { suffix: 'Fre', key: 'brakes', label: 'Freios' },
-  { suffix: 'Sus', key: 'suspension', label: 'Suspensão' },
-  { suffix: 'Ele', key: 'electronics', label: 'Eletrônicos' }
+import { Money, L } from '@/components/ui/compact'
+
+const PARTS: {
+  suffix: PartSuffix
+  key: CarPartKey
+  label: string
+  short: string
+}[] = [
+  { suffix: 'Cha', key: 'chassis', label: 'Chassis', short: 'Chassis' },
+  { suffix: 'Mot', key: 'engine', label: 'Motor', short: 'Motor' },
+  { suffix: 'Asd', key: 'front_wing', label: 'Asa Dianteira', short: 'Asa D.' },
+  { suffix: 'Ast', key: 'rear_wing', label: 'Asa Traseira', short: 'Asa T.' },
+  { suffix: 'Ass', key: 'underbody', label: 'Assoalho', short: 'Assoalho' },
+  { suffix: 'Lat', key: 'sidepods', label: 'Laterais', short: 'Laterais' },
+  { suffix: 'Rad', key: 'radiator', label: 'Radiador', short: 'Radiador' },
+  { suffix: 'Cam', key: 'gearbox', label: 'Câmbio', short: 'Câmbio' },
+  { suffix: 'Fre', key: 'brakes', label: 'Freios', short: 'Freios' },
+  { suffix: 'Sus', key: 'suspension', label: 'Suspensão', short: 'Susp.' },
+  { suffix: 'Ele', key: 'electronics', label: 'Eletrônicos', short: 'Eletr.' }
 ]
 
 type PartSim = { lvl: number; wear: number; acao: number }
@@ -214,11 +221,11 @@ export function WearPlanner({
   return (
     <div className="space-y-6">
       {/* ===== Topo: pista, testes, risco e PHA ===== */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
           <span className="text-sm font-medium">Pista</span>
           <select
-            className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
             value={trackId}
             onChange={e => setTrackId(e.target.value)}
           >
@@ -232,7 +239,7 @@ export function WearPlanner({
 
         <div className="space-y-1">
           <span className="text-sm font-medium">Pista de Testes</span>
-          <div className="flex h-9 items-center rounded-md border bg-muted/30 px-3 text-sm">
+          <div className="flex h-8 items-center rounded-md border bg-muted/30 px-3 text-sm">
             {testTrack.name}
           </div>
         </div>
@@ -243,43 +250,49 @@ export function WearPlanner({
             type="number"
             min={0}
             max={100}
-            className="h-9 w-full"
+            className="h-8 w-20"
             value={riskStr}
             onChange={e => setRiskStr(e.target.value)}
             onBlur={() => riskStr === '' && setRiskStr('0')}
           />
         </div>
-
-        <div className="rounded-md border">
-          <table className="w-full text-sm">
-            <tbody>
-              {phaRows.map(r => (
-                <tr key={r.k} className="border-b last:border-0">
-                  <td className="px-3 py-1 font-semibold uppercase">{r.k}</td>
-                  <td className="px-3 py-1 text-center">{r.current}</td>
-                  <td
-                    className={cn(
-                      'px-3 py-1 text-center',
-                      r.diff >= 0 ? 'text-green-600' : 'text-red-600'
-                    )}
-                  >
-                    {r.diff}
-                  </td>
-                  <td
-                    className={cn(
-                      'px-3 py-1 text-center',
-                      r.diff >= 0 ? 'text-green-600' : 'text-red-600'
-                    )}
-                  >
-                    {r.simTotal}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </div>
+                  <div className="grid gap-6 sm:grid-cols-2">
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base">PHA</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <table className="w-full text-xs sm:text-sm">
+              <tbody>
+                {phaRows.map(r => (
+                  <tr key={r.k} className="border-b last:border-0">
+                    <td className="px-2 py-1 font-semibold uppercase">{r.k}</td>
+                    <td className="px-2 py-1 text-center">{r.current}</td>
+                    <td
+                      className={cn(
+                        'px-2 py-1 text-center',
+                        r.diff >= 0 ? 'text-green-600' : 'text-red-600'
+                      )}
+                    >
+                      {r.diff}
+                    </td>
+                    <td
+                      className={cn(
+                        'px-2 py-1 text-center',
+                        r.diff >= 0 ? 'text-green-600' : 'text-red-600'
+                      )}
+                    >
+                      {r.simTotal}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
 
+        {/* card de Stints existente entra aqui dentro */}
       {/* ===== Stints e voltas de testes (acima da tabela do carro) ===== */}
       <Card>
         <CardHeader>
@@ -344,41 +357,55 @@ export function WearPlanner({
           </Button>
         </CardContent>
       </Card>
-
+      </div>
       {/* ===== Tabela do carro ===== */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Carro</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto rounded-md border">
-            <table className="w-full text-sm">
+                   <div className="overflow-x-auto rounded-md border">
+            <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="px-2 py-2 text-left">Peça</th>
-                  <th className="px-2 py-2 text-center">Nível</th>
-                  <th className="px-2 py-2 text-center">%</th>
-                  <th className="px-2 py-2 text-left">Simulação da ação</th>
-                  <th className="px-2 py-2 text-center">Pista</th>
-                  <th className="px-2 py-2 text-center">Teste</th>
-                  <th className="px-2 py-2 text-center">Total</th>
-                  <th className="px-2 py-2 text-center">$ Peças</th>
-                  <th className="px-2 py-2 text-center">$ Desgastes</th>
+                  <th className="px-1.5 py-1 text-left">Peça</th>
+                  <th className="px-1.5 py-1 text-center">
+                    <L short="Nv" long="Nível" />
+                  </th>
+                  <th className="px-1.5 py-1 text-center">%</th>
+                  <th className="px-1.5 py-1 text-left">
+                    <L short="Ação" long="Simulação da ação" />
+                  </th>
+                  <th className="px-1.5 py-1 text-center">Pista</th>
+                  <th className="hidden px-1.5 py-1 text-center sm:table-cell">
+                    Teste
+                  </th>
+                  <th className="px-1.5 py-1 text-center">
+                    <L short="Tot" long="Total" />
+                  </th>
+                  <th className="px-1.5 py-1 text-center">
+                    <L short="$P" long="$ Peças" />
+                  </th>
+                  <th className="px-1.5 py-1 text-center">
+                    <L short="$D" long="$ Desgastes" />
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map(r => (
                   <tr key={r.suffix} className="border-b last:border-0">
-                    <td className="px-2 py-1.5">{r.label}</td>
-                    <td className="px-2 py-1.5 text-center">
+                    <td className="px-1.5 py-1">
+                      <L short={r.short} long={r.label} />
+                    </td>
+                    <td className="px-1.5 py-1 text-center">
                       {car[`${r.key}_lvl`]}
                     </td>
-                    <td className="px-2 py-1.5 text-center">
+                    <td className="px-1.5 py-1 text-center">
                       {car[`${r.key}_wear`]}%
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td className="px-1.5 py-1">
                       <select
-                        className="h-8 w-full min-w-56 rounded-md border border-input bg-background px-2 text-sm"
+                        className="h-7 w-full min-w-0 rounded-md border border-input bg-background px-1 text-xs"
                         value={r.s.acao}
                         onChange={e => handleSelect(r, parseInt(e.target.value))}
                       >
@@ -389,33 +416,40 @@ export function WearPlanner({
                         ))}
                       </select>
                     </td>
-                    <td className="px-2 py-1.5 text-center">{r.pistaWear}%</td>
-                    <td className="px-2 py-1.5 text-center">{r.testeWear}%</td>
+                    <td className="px-1.5 py-1 text-center">{r.pistaWear}%</td>
+                    <td className="hidden px-1.5 py-1 text-center sm:table-cell">
+                      {r.testeWear}%
+                    </td>
                     <td
                       className={cn(
-                        'px-2 py-1.5 text-center',
+                        'px-1.5 py-1 text-center',
                         r.total >= 90 && 'font-semibold text-red-600'
                       )}
                     >
                       {r.total}%
                     </td>
-                    <td className="px-2 py-1.5 text-center">
-                      ${formatNumber(r.gastoPeca)}
+                    <td className="px-1.5 py-1 text-center">
+                      <Money value={r.gastoPeca} />
                     </td>
-                    <td className="px-2 py-1.5 text-center">
-                      ${formatNumber(r.gastoDesgaste)}
+                    <td className="px-1.5 py-1 text-center">
+                      <Money value={r.gastoDesgaste} />
                     </td>
                   </tr>
                 ))}
                 <tr>
-                  <td colSpan={7} className="px-2 py-2 text-right font-semibold">
+                  <td
+                    colSpan={5}
+                    className="px-1.5 py-1 text-right font-semibold"
+                  >
                     Total
                   </td>
-                  <td className="px-2 py-2 text-center">
-                    ${formatNumber(totalPecas)}
+                  <td className="hidden sm:table-cell" />
+                  <td className="px-1.5 py-1" />
+                  <td className="px-1.5 py-1 text-center">
+                    <Money value={totalPecas} />
                   </td>
-                  <td className="px-2 py-2 text-center">
-                    ${formatNumber(totalDesgastes)}
+                  <td className="px-1.5 py-1 text-center">
+                    <Money value={totalDesgastes} />
                   </td>
                 </tr>
               </tbody>

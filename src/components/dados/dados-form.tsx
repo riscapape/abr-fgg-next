@@ -344,27 +344,27 @@ export function DadosForm({
   return (
     <div className="space-y-6">
       {/* ===== Linha superior ===== */}
-      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+           <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
           <Label>Pista</Label>
           <select
-  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-  value={trackId}
-  onChange={e => setTrackId(e.target.value)}
->
-  <option value="">Selecione...</option>
-  {tracks.map(t => (
-    <option key={t.id} value={t.id}>
-  {t.name}
-</option>
-  ))}
-</select>
+            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            value={trackId}
+            onChange={e => setTrackId(e.target.value)}
+          >
+            <option value="">Selecione...</option>
+            {tracks.map(t => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-1">
           <Label>Pneu</Label>
           <select
-            className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
             value={tireId}
             onChange={e => setTireId(e.target.value)}
           >
@@ -379,7 +379,7 @@ export function DadosForm({
         <div className="space-y-1">
           <Label>Temperatura</Label>
           <NumInput
-            className="w-full"
+            className="w-24"
             value={airTemp}
             onChange={setAirTemp}
             min={LIMITS.AIR_TEMP.min}
@@ -391,7 +391,7 @@ export function DadosForm({
         <div className="space-y-1">
           <Label>Risco CT</Label>
           <NumInput
-            className="w-full"
+            className="w-20"
             value={ctRisk}
             onChange={setCtRisk}
             min={LIMITS.CT_RISK.min}
@@ -402,7 +402,7 @@ export function DadosForm({
         <div className="space-y-1">
           <Label>Tempo do pit</Label>
           <NumInput
-            className="w-full"
+            className="w-24"
             value={pitTime}
             onChange={setPitTime}
             min={LIMITS.PIT_TIME.min}
@@ -595,7 +595,7 @@ export function DadosForm({
                 {CAR_PARTS.map(part => (
                   <tr key={part.key} className="border-b last:border-0">
                     <td className="px-2 py-1.5">{part.label}</td>
-                    <td className="px-2 py-1.5">
+                    <td className="h-7 w-12 sm:h-8 sm:w-16">
                       <select
                         className="h-8 w-16 rounded-md border border-input bg-background px-2 text-sm"
                         value={carParts[part.key].lvl}
@@ -610,7 +610,7 @@ export function DadosForm({
                     </td>
                     <td className="px-2 py-1.5">
                       <NumInput
-                        className="w-20"
+                        className="h-7 w-14 sm:h-8 sm:w-20"
                         value={carParts[part.key].wear}
                         onChange={v => updateCarPart(part.key, 'wear', v)}
                         min={LIMITS.PART_WEAR.min}

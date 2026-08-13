@@ -23,6 +23,15 @@ import {
   type DriverFormula
 } from '@/lib/gpro/formulas'
 import { cn } from '@/lib/utils'
+import { L } from '@/components/ui/compact'
+
+const TIRE_SHORT: Record<string, string> = {
+  supermacio: 'Sup.',
+  macio: 'Mac.',
+  medio: 'Méd.',
+  duro: 'Duro',
+  chuva: 'Chuva'
+}
 
 const BOOST_OPTIONS = [
   { value: 0, label: '0' },
@@ -228,7 +237,7 @@ export function StrategyPlanner({
   return (
     <div className="space-y-6">
       {/* ===== Topo: leitura + campos editáveis ===== */}
-      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="flex flex-wrap items-end gap-3">
         <Info label="Pista" value={track.name} />
         <Info label="Pneu" value={tire.name} />
 
@@ -238,10 +247,10 @@ export function StrategyPlanner({
             type="number"
             min={-50}
             max={50}
-            step={0.1}
-            className="h-9 w-full"
+            step={0.001}
+            className="h-8 w-24"
             value={tempStr}
-            onChange={e => setTempStr(clampStr(e.target.value, -50, 50))}
+            onChange={e => setTempStr(e.target.value)}
             onBlur={() => tempStr === '' && setTempStr('0')}
           />
         </div>
@@ -252,9 +261,9 @@ export function StrategyPlanner({
             type="number"
             min={0}
             max={100}
-            className="h-9 w-full"
+            className="h-8 w-20"
             value={ctMinStr}
-            onChange={e => setCtMinStr(clampStr(e.target.value, 0, 100))}
+            onChange={e => setCtMinStr(e.target.value)}
             onBlur={() => ctMinStr === '' && setCtMinStr('0')}
           />
         </div>
@@ -265,9 +274,9 @@ export function StrategyPlanner({
             type="number"
             min={0}
             max={100}
-            className="h-9 w-full"
+            className="h-8 w-20"
             value={ctMaxStr}
-            onChange={e => setCtMaxStr(clampStr(e.target.value, 0, 100))}
+            onChange={e => setCtMaxStr(e.target.value)}
             onBlur={() => ctMaxStr === '' && setCtMaxStr('0')}
           />
         </div>
@@ -279,15 +288,15 @@ export function StrategyPlanner({
             min={0}
             max={60}
             step={0.1}
-            className="h-9 w-full"
+            className="h-8 w-24"
             value={pitStr}
-            onChange={e => setPitStr(clampStr(e.target.value, 0, 60))}
+            onChange={e => setPitStr(e.target.value)}
             onBlur={() => pitStr === '' && setPitStr('0')}
           />
         </div>
       </div>
 
-              <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-2">
         {/* ===== Melhores estratégias (todos os riscos juntos) ===== */}
 
                 {/* ===== Melhores estratégias (todos os riscos juntos) ===== */}
@@ -301,7 +310,7 @@ export function StrategyPlanner({
                 <tr className="border-b bg-muted/50">
                   <th className="px-2 py-2 text-center">#</th>
                   <th className="px-2 py-2 text-left">Estratégia</th>
-                  <th className="px-2 py-2 text-center">Risco CT</th>
+                  <th className="px-2 py-2 text-center"><L short="CT" long="Risco CT" /></th>
                   <th className="px-2 py-2 text-center">Tempo</th>
                   <th className="px-2 py-2 text-center">% Pneu</th>
                 </tr>
@@ -310,7 +319,9 @@ export function StrategyPlanner({
                 {combinedBest.map((s, idx) => (
                   <tr key={`${s.id}-${s.ct}`} className="border-b last:border-0">
                     <td className="px-2 py-1.5 text-center">{idx + 1}</td>
-                    <td className="px-2 py-1.5">{s.name}</td>
+                    <td className="px-2 py-1.5">
+                    <L short={`${TIRE_SHORT[s.tire]} ${s.pits}p`} long={s.name} />
+                  </td>
                     <td className="px-2 py-1.5 text-center">{s.ct}</td>
                     <td className="px-2 py-1.5 text-center">
                       {idx === 0
@@ -340,7 +351,7 @@ export function StrategyPlanner({
         </Card>
 
         {/* ===== Monte sua estratégia ===== */}
-        <Card className="lg:col-span-2">
+                <Card>
           <CardHeader>
             <CardTitle className="text-base">Monte sua estratégia</CardTitle>
           </CardHeader>
@@ -446,7 +457,7 @@ export function StrategyPlanner({
                             type="number"
                             min={1}
                             max={99}
-                            className="mx-auto h-8 w-20 text-center"
+                            className="mx-auto h-7 w-12 text-center sm:h-8 sm:w-20"
                             value={stintStr}
                             onChange={e => updateStint(idx, e.target.value)}
                             onBlur={() => handleStintBlur(idx)}
@@ -461,7 +472,7 @@ export function StrategyPlanner({
                         </td>
                         <td className="px-2 py-1.5 text-center">
                           <select
-                            className="h-8 w-16 rounded-md border border-input bg-background px-2 text-sm"
+                            className="h-7 w-12 sm:h-8 sm:w-16"
                             value={boost}
                             onChange={e => updateBoost(idx, Number(e.target.value))}
                           >
