@@ -255,10 +255,17 @@ export function SetupPlanner({
           />
         </div>
 
-        <div className="space-y-1">
+                <div className="space-y-1">
           <span className="text-sm font-medium">Fórmula Analyzer</span>
           <div className="flex h-8 items-center justify-center rounded-md border bg-muted/30 px-3 text-sm font-semibold">
             {analyzer}
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <span className="text-sm font-medium">Diferença ideal</span>
+          <div className="flex h-8 items-center justify-center rounded-md border bg-muted/30 px-3 text-sm font-semibold">
+            {Math.round(difIdeal)}
           </div>
         </div>
       </div>
@@ -323,28 +330,6 @@ export function SetupPlanner({
                     <td className="px-2 py-2 text-center">2</td>
                     <td className="px-2 py-2 text-center">
                       {2 * track.setup_split}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-base">Diferença ideal</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-2 py-2 text-center">Diferença de Asas</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="px-2 py-2 text-center">
-                      {Math.round(difIdeal)}
                     </td>
                   </tr>
                 </tbody>

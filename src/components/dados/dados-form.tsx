@@ -399,7 +399,7 @@ export function DadosForm({
           />
         </div>
 
-        <div className="space-y-1">
+                <div className="space-y-1">
           <Label>Tempo do pit</Label>
           <NumInput
             className="w-24"
@@ -410,6 +410,10 @@ export function DadosForm({
             step={LIMITS.PIT_TIME.step}
           />
         </div>
+
+        <Button onClick={handleSave} disabled={loading} className="h-8">
+          {loading ? 'Salvando...' : 'Salvar Dados'}
+        </Button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-4">
@@ -660,13 +664,6 @@ export function DadosForm({
             </table>
           </div>
         </section>
-      </div>
-
-      {/* ===== Botão único de salvar ===== */}
-      <div className="flex justify-center">
-        <Button onClick={handleSave} disabled={loading} className="min-w-40">
-          {loading ? 'Salvando...' : 'Salvar Dados'}
-        </Button>
       </div>
     </div>
   )
