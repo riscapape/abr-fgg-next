@@ -26,6 +26,9 @@ export function AppHeader({ profile }: { profile: SessionProfile }) {
 <Link href="/desgaste" className="text-muted-foreground hover:text-foreground">
   Desgaste
 </Link>
+<Link href="/testes" className="text-muted-foreground hover:text-foreground">
+  Testes
+</Link>
 
   {profile.role === 'owner' && (
   <>
