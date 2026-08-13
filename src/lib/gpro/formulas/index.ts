@@ -29,6 +29,9 @@ export {
   hardDurability,
   wetDurability,
   allDurabilities,
+  RISK_COEF_BY_COMPOUND,
+  riskFactor,
+  durabilityAtRisk,
   type DurabilityParams
 } from './durabilidade'
 
@@ -83,3 +86,16 @@ export type {
   PartSuffix
 } from './types'
 export { PART_SUFFIX_MAP } from './types'
+
+// Estratégias de corrida
+export {
+  calculateStrategies,
+  bestStrategies,
+  distributeStints,
+   buildCtList,
+  COMPOUNDS,
+  COMPOUND_LABELS,
+  type RaceStrategy,
+  type TireCompound,
+  type StrategyParams
+} from './estrategias'

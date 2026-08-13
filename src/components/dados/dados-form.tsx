@@ -96,7 +96,7 @@ export function DadosForm({
   race
 }: {
   userId: string
-  tracks: { id: string; name: string }[]
+  tracks: { id: string; name: string; race_number?: number }[]
   tires: { id: string; name: string }[]
   defaultTrackId: string | null
   car: Row
@@ -348,17 +348,17 @@ export function DadosForm({
         <div className="space-y-1">
           <Label>Pista</Label>
           <select
-            className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-            value={trackId}
-            onChange={e => setTrackId(e.target.value)}
-          >
-            <option value="">Selecione...</option>
-            {tracks.map(t => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+  className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+  value={trackId}
+  onChange={e => setTrackId(e.target.value)}
+>
+  <option value="">Selecione...</option>
+  {tracks.map(t => (
+    <option key={t.id} value={t.id}>
+  {t.name}
+</option>
+  ))}
+</select>
         </div>
 
         <div className="space-y-1">

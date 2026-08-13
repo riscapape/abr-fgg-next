@@ -70,3 +70,26 @@ export function allDurabilities(params: DurabilityParams, risk: number) {
     wet: wetDurability(params, risk)
   }
 }
+
+// Coeficientes de risco CT por composto (os mesmos da durabilidade)
+export const RISK_COEF_BY_COMPOUND = {
+  supermacio: 0.99816,
+  macio: 0.99709,
+  medio: 0.99637,
+  duro: 0.99585,
+  chuva: 0.99608
+} as const
+
+export type RiskCompound = keyof typeof RISK_COEF_BY_COMPOUND
+
+// Fator de tempo para um composto e risco CT: coef ^ riscoCT
+// Quanto maior o risco, menor o tempo (e menor a durabilidade)
+export function riskFactor(compound: RiskCompound, risk: number): number {
+  return RISK_COEF_BY_COMPOUND[compound] ** risk
+}
+
+// Durabilidade XS CT 0 ajustada ao risco (supermacio):
+// durabilidade * (0.99816 ^ riscoCT)
+export function durabilityAtRisk(baseDurability: number, risk: number): number {
+  return baseDurability * (RISK_COEF_BY_COMPOUND.supermacio ** risk)
+}

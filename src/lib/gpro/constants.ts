@@ -51,7 +51,7 @@ export const LIMITS = {
   PART_WEAR: { min: 0, max: 100 },
 
   // Dados da corrida
-  AIR_TEMP: { min: -50, max: 50, step: 0.001 },  
+  AIR_TEMP: { min: -50, max: 50, step: 0.1 },  
   CT_RISK: { min: 0, max: 100 },
   PIT_TIME: { min: 0, max: 60, step: 0.1 },
   RACE_TEMP: { min: -50, max: 50 },            

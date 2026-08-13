@@ -83,6 +83,12 @@ export function UserMenu({ profile }: { profile: SessionProfile }) {
          <DropdownMenuItem render={<Link href="/dados" />}>
             Dados
           </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/estrategias" />}>
+  Estratégias
+</DropdownMenuItem>
+<DropdownMenuItem render={<Link href="/desgaste" />}>
+  Desgaste
+</DropdownMenuItem>
           <DropdownMenuItem render={<Link href="/account/profile" />}>
             Minha conta
           </DropdownMenuItem>

@@ -13,29 +13,43 @@ export default async function DadosPage() {
     redirect('/login')
   }
 
-  const [carRes, driverRes, raceRes, tracksRes, tiresRes, seasonRes] =
-    await Promise.all([
-      supabase.from('cars').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('drivers').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('race_data').select('*').eq('user_id', user.id).maybeSingle(),
-      supabase.from('tracks').select('id, name').order('name'),
-      supabase.from('tires').select('id, name').order('name'),
-      supabase.from('seasons').select('id').eq('is_active', true).maybeSingle()
-    ])
+  const [raceRes, carRes, driverRes, tiresRes, seasonRes] = await Promise.all([
+    supabase
+      .from('race_data')
+      .select('*, track:tracks(*), tire:tires(*)')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    supabase.from('cars').select('*').eq('user_id', user.id).maybeSingle(),
+    supabase.from('drivers').select('*').eq('user_id', user.id).maybeSingle(),
+    supabase.from('tires').select('id, name').order('name'),
+    supabase.from('seasons').select('id').eq('is_active', true).maybeSingle()
+  ])
 
-  // Pista padrão = 1ª corrida da temporada ativa (ex: Estoril)
-  let defaultTrackId: string | null = null
+  // ===== Pistas da temporada ativa, na ordem das corridas (1–17) =====
+  let tracks: { id: string; name: string; race_number?: number }[] = []
+
   if (seasonRes.data) {
-    const race1 = await supabase
+    const racesRes = await supabase
       .from('season_races')
-      .select('track_id')
+      .select('race_number, track:tracks(id, name)')
       .eq('season_id', seasonRes.data.id)
       .order('race_number', { ascending: true })
-      .limit(1)
-      .maybeSingle()
 
-    defaultTrackId = race1.data?.track_id ?? null
+    tracks = (racesRes.data ?? []).map((r: any) => ({
+      id: r.track?.id ?? '',
+      name: r.track?.name ?? '',
+      race_number: r.race_number
+    }))
   }
+
+  // Fallback: sem temporada ativa, lista todas as pistas
+  if (tracks.length === 0) {
+    const allRes = await supabase.from('tracks').select('id, name').order('name')
+    tracks = (allRes.data ?? []).map((t: any) => ({ id: t.id, name: t.name }))
+  }
+
+  const defaultTrackId =
+    tracks.find(t => t.race_number === 1)?.id ?? tracks[0]?.id ?? ''
 
   return (
     <div className="space-y-6">
@@ -48,7 +62,7 @@ export default async function DadosPage() {
 
       <DadosForm
         userId={user.id}
-        tracks={tracksRes.data ?? []}
+        tracks={tracks}
         tires={tiresRes.data ?? []}
         defaultTrackId={defaultTrackId}
         car={carRes.data}
