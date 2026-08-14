@@ -14,9 +14,9 @@ import {
   type CarFormula,
   type DriverFormula,
   type TrackFormula,
-  type PartSuffix,
-  type CarPartKey
+  type PartSuffix
 } from '@/lib/gpro/formulas'
+import type { CarPartKey } from '@/lib/gpro/constants'
 import { cn } from '@/lib/utils'
 
 import { Money, L } from '@/components/ui/compact'

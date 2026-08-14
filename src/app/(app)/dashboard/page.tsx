@@ -180,10 +180,10 @@ export default async function DashboardPage() {
 
                 <div className="flex flex-wrap gap-2 text-sm">
                   <Badge variant="outline">
-                    Pista selecionada: {raceDataRes.data?.track?.name ?? '—'}
+                   Pista selecionada: {(raceDataRes.data as any)?.track?.name ?? '—'}
                   </Badge>
                   <Badge variant="outline">
-                    Pneu selecionado: {raceDataRes.data?.tire?.name ?? '—'}
+                   Pneu selecionado: {(raceDataRes.data as any)?.tire?.name ?? '—'}
                   </Badge>
                   <Badge variant="outline">
                     Pista de testes: {(season as any)?.test_track?.name ?? '—'}
