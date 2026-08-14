@@ -17,10 +17,19 @@ import { cn } from '@/lib/utils'
 
 const DAY_MS = 86_400_000
 
+// Fuso horário oficial do app (corridas do GPRO / managers no Brasil)
+const APP_TIMEZONE = 'America/Sao_Paulo'
+
+// "Hoje" no calendário do fuso do app — não no fuso do servidor (UTC)
 function startOfToday(): Date {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  const [y, m, d] = fmt.format(new Date()).split('-')
+  return new Date(`${y}-${m}-${d}T00:00:00`)
 }
 
 function parseDate(iso: string): Date {

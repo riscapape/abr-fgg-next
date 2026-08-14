@@ -10,6 +10,7 @@ export function AppHeader({ profile }: { profile: SessionProfile }) {
     { href: '/desgaste', label: 'Desgaste' },
     { href: '/testes', label: 'Testes' },
     { href: '/setup', label: 'Setup' },
+    { href: '/planejamento', label: 'Planejamento' },
     ...(profile.role === 'owner'
       ? [
           { href: '/admin/users', label: 'Usuários' },
