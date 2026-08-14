@@ -59,20 +59,16 @@ function generateRaceDates(startDate: Date, totalRaces: number): Date[] {
   const dates: Date[] = []
   const current = new Date(startDate)
 
-  for (let i = 0; i < totalRaces; i++) {
-    dates.push(new Date(current))
-
-    // Avança para o próximo dia de corrida (terça ou sexta)
-    if (current.getDay() === 5) {
-      // sexta -> próxima terça (+3 dias)
-      current.setDate(current.getDate() + 3)
-    } else {
-      // terça -> próxima sexta (+4 dias... não, terça -> sexta é +3 dias)
-      // Espera: terça (2) -> sexta (5) = +3 dias
-      current.setDate(current.getDate() + 3)
-    }
+  // Se a data inicial não for terça nem sexta, avança para o próximo dia de corrida
+  while (current.getDay() !== 2 && current.getDay() !== 5) {
+    current.setDate(current.getDate() + 1)
   }
 
+  for (let i = 0; i < totalRaces; i++) {
+    dates.push(new Date(current))
+    // sexta (5) -> terça (2): +4 dias | terça (2) -> sexta (5): +3 dias
+    current.setDate(current.getDate() + (current.getDay() === 5 ? 4 : 3))
+  }
   return dates
 }
 

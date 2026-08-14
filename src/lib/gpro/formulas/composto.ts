@@ -7,5 +7,7 @@ export function calculateCompound(
   temperature: number,
   tire: TireFormula
 ): number {
-  return track.tire_coef * (50.0 - temperature) + tire.temp_coef
+  return Number(
+    (track.tire_coef * (50.0 - temperature) + tire.temp_coef).toFixed(3)
+  )
 }
