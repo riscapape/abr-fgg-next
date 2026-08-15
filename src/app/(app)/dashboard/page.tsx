@@ -263,34 +263,6 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* ===== Piloto ===== */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Piloto</CardTitle>
-            <CardDescription>Resumo dos atributos</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between rounded-md border p-3">
-              <span className="text-sm text-muted-foreground">Total</span>
-              <span className="text-2xl font-semibold">
-               {driver ? Math.floor(calculateOA(driver)) : '—'}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <Stat label="Concentração" value={driver?.concentration ?? '—'} />
-              <Stat label="Talento" value={driver?.talent ?? '—'} />
-              <Stat label="Experiência" value={driver?.experience ?? '—'} />
-              <Stat label="Resistência" value={driver?.endurance ?? '—'} />
-              <Stat
-                label="Peso"
-                value={driver?.weight_kg != null ? `${driver.weight_kg} kg` : '—'}
-              />
-              <Stat label="Idade" value={driver?.age ?? '—'} />
-            </div>
-          </CardContent>
-        </Card>
-
         {/* ===== Calendário ===== */}
         <Card className="lg:col-span-2">
           <CardHeader>
@@ -339,6 +311,62 @@ export default async function DashboardPage() {
             )}
           </CardContent>
         </Card>
+        {/* ===== Piloto ===== */}
+        <div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Piloto</CardTitle>
+            <CardDescription>Resumo dos atributos</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <span className="text-sm text-muted-foreground">Total</span>
+              <span className="text-2xl font-semibold">
+               {driver ? Math.floor(calculateOA(driver)) : '—'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Stat label="Concentração" value={driver?.concentration ?? '—'} />
+              <Stat label="Talento" value={driver?.talent ?? '—'} />
+              <Stat label="Experiência" value={driver?.experience ?? '—'} />
+              <Stat label="Resistência" value={driver?.endurance ?? '—'} />
+              <Stat
+                label="Peso"
+                value={driver?.weight_kg != null ? `${driver.weight_kg} kg` : '—'}
+              />
+              <Stat label="Idade" value={driver?.age ?? '—'} />
+            </div>
+          </CardContent>
+        </Card>
+               {/* ===== Extensão ===== */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Extensão ABR-FGG Collector</CardTitle>
+            <CardDescription>
+              Coleta piloto, carro e dados da corrida direto do GPRO.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <a
+              href="/abr-fgg-collector.zip"
+              download="abr-fgg-collector.zip"
+              className={buttonVariants({ className: 'w-full' })}
+            >
+              Baixar extensão (.zip)
+            </a>
+            <ol className="list-decimal space-y-1 pl-4 text-xs text-muted-foreground">
+              <li>Extraia o arquivo .zip;</li>
+              <li>
+                Abra <span className="font-mono">chrome://extensions</span> e ative o
+                <strong> Modo do desenvolvedor</strong>;
+              </li>
+              <li>Clique em "Carregar sem compactação" e selecione a pasta extraída;</li>
+              <li>No GPRO, abra o popup da extensão → Coletar → Salvar no ABR-FGG.</li>
+            </ol>
+          </CardContent>
+        </Card>
+            </div>
       </div>
     </div>
   )

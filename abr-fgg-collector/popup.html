@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>ABR-FGG Collector</title>
+
+    <style>
+      body {
+        width: 380px;
+        padding: 14px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 13px;
+      }
+
+      h1 {
+        font-size: 16px;
+        margin: 0 0 12px;
+      }
+
+      h2 {
+        font-size: 14px;
+        margin: 12px 0 8px;
+      }
+
+      label {
+        display: block;
+        margin-top: 8px;
+        margin-bottom: 3px;
+        font-size: 12px;
+        color: #444;
+      }
+
+      input {
+        width: 100%;
+        padding: 7px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+
+      button {
+        margin-top: 10px;
+        padding: 8px 10px;
+        border: 0;
+        border-radius: 6px;
+        background: #111827;
+        color: white;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .status {
+        padding: 8px;
+        border-radius: 6px;
+        background: #f1f3f5;
+        margin: 10px 0;
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .status-success {
+        background: #d1e7dd;
+        color: #0f5132;
+      }
+
+      .status-error {
+        background: #f8d7da;
+        color: #842029;
+      }
+
+      .status-warning {
+        background: #fff3cd;
+        color: #664d03;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .topbar span {
+        font-size: 12px;
+        color: #333;
+        word-break: break-all;
+      }
+
+      .topbar button {
+        margin: 0;
+        padding: 5px 8px;
+        font-size: 12px;
+        background: #dc3545;
+      }
+
+      #url-display {
+        font-size: 11px;
+        color: #666;
+        word-break: break-all;
+        margin-bottom: 8px;
+      }
+
+      #preview {
+        margin-top: 12px;
+      }
+
+      .section {
+        margin-bottom: 12px;
+      }
+
+      pre {
+        background: #f8f9fa;
+        padding: 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        overflow: auto;
+        max-height: 220px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>ABR-FGG Collector</h1>
+
+    <!-- LOGIN -->
+    <section id="login-section">
+      <div id="auth-status" class="status">
+        Faça login para usar a extensão.
+      </div>
+
+      <label for="login-email">Email</label>
+      <input
+        id="login-email"
+        type="email"
+        autocomplete="username"
+        placeholder="seu@email.com"
+      />
+
+      <label for="login-pass">Senha</label>
+      <input
+        id="login-pass"
+        type="password"
+        autocomplete="current-password"
+        placeholder="Sua senha"
+      />
+
+      <button id="btn-connect" type="button">Entrar</button>
+    </section>
+
+    <!-- APP -->
+    <section id="app-section" hidden>
+      <div class="topbar">
+        <span id="user-email"></span>
+        <button id="btn-logout" type="button">Sair</button>
+      </div>
+
+      <div id="status" class="status">
+        Clique em "Coletar" para iniciar.
+      </div>
+
+      <div id="url-display"></div>
+
+      <div class="actions">
+        <button id="btn-collect" type="button">Coletar</button>
+        <button id="btn-save" type="button" disabled>Salvar no ABR-FGG</button>
+      </div>
+
+      <div id="preview" hidden>
+        <h2>Dados coletados</h2>
+        <div id="preview-content"></div>
+      </div>
+    </section>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

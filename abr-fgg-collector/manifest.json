@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "ABR-FGG Collector",
+  "version": "1.0.3",
+  "description": "Coleta dados do gpro.net e envia para o ABR-FGG",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://gpro.net/*",
+    "https://*.gpro.net/*",
+    "https://ykomikdtjefifewjjqel.supabase.co/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://gpro.net/*",
+        "https://*.gpro.net/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
