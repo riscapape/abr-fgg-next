@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
 import { TestesPlanner } from '@/components/testes/testes-planner'
-import { mapCar, mapDriver, mapTrack, mapTire } from '@/lib/gpro/mappers'
+import { mapCar, mapDriver, mapTire, mapTrack } from '@/lib/gpro/mappers'
+import type { Weather } from '@/lib/gpro/formulas'
 
 export default async function TestesPage() {
   const supabase = await createClient()
@@ -27,7 +28,7 @@ export default async function TestesPage() {
       .maybeSingle(),
     supabase
       .from('race_data')
-      .select('tire:tires(*)')
+      .select('test_temp, test_weather, tire:tires(*)')
       .eq('user_id', user.id)
       .maybeSingle(),
     supabase.from('tires').select('*').order('name')
@@ -36,16 +37,13 @@ export default async function TestesPage() {
   const testTrackRow = (seasonRes.data as any)?.test_track
   const tireRow = (raceRes.data as any)?.tire ?? tiresRes.data?.[0]
 
-  if (!carRes.data || !driverRes.data || !testTrackRow || !tireRow) {
+  if (!carRes.data || !driverRes.data || !testTrackRow) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold">Testes</h1>
         <Card>
           <CardContent className="space-y-3 pt-6 text-sm text-muted-foreground">
-            <p>
-              Configure a temporada (pista de testes) e seus dados para simular
-              os testes.
-            </p>
+            <p>Configure a temporada ativa e seus dados para simular testes.</p>
             <Link href="/dados" className={buttonVariants()}>
               Ir para Dados
             </Link>
@@ -60,7 +58,7 @@ export default async function TestesPage() {
       <div>
         <h1 className="text-2xl font-semibold">Testes</h1>
         <p className="text-sm text-muted-foreground">
-          Simule o stint de testes: setup, combustível e desgaste dos pneus.
+          Simule setup, combustível e desgaste de pneus na pista de testes.
         </p>
       </div>
 
@@ -69,6 +67,8 @@ export default async function TestesPage() {
         driver={mapDriver(driverRes.data)}
         testTrack={mapTrack(testTrackRow)}
         tire={mapTire(tireRow)}
+        initialTemp={String((raceRes.data as any)?.test_temp ?? 0)}
+        initialWeather={((raceRes.data as any)?.test_weather ?? 'seco') as Weather}
       />
     </div>
   )

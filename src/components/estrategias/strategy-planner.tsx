@@ -247,7 +247,7 @@ export function StrategyPlanner({
             type="number"
             min={-50}
             max={50}
-            step={0.001}
+            step={0.1}
             className="h-8 w-24"
             value={tempStr}
             onChange={e => setTempStr(e.target.value)}

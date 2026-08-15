@@ -14,6 +14,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { CAR_PARTS } from '@/lib/gpro/constants'
 import { cn } from '@/lib/utils'
+import { calculateOA } from '@/lib/gpro/formulas'
 
 const DAY_MS = 86_400_000
 
@@ -222,7 +223,7 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between rounded-md border p-3">
               <span className="text-sm text-muted-foreground">Total</span>
               <span className="text-2xl font-semibold">
-                {driver?.total != null ? Number(driver.total).toFixed(2) : '—'}
+               {driver ? Math.floor(calculateOA(driver)) : '—'}
               </span>
             </div>
 
