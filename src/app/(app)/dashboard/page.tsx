@@ -212,38 +212,7 @@ export default async function DashboardPage() {
             </CardHeader>
           )}
         </Card>
-
-        {/* ===== Piloto ===== */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Piloto</CardTitle>
-            <CardDescription>Resumo dos atributos</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between rounded-md border p-3">
-              <span className="text-sm text-muted-foreground">Total</span>
-              <span className="text-2xl font-semibold">
-               {driver ? Math.floor(calculateOA(driver)) : '—'}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <Stat label="Concentração" value={driver?.concentration ?? '—'} />
-              <Stat label="Talento" value={driver?.talent ?? '—'} />
-              <Stat label="Experiência" value={driver?.experience ?? '—'} />
-              <Stat label="Resistência" value={driver?.endurance ?? '—'} />
-              <Stat
-                label="Peso"
-                value={driver?.weight_kg != null ? `${driver.weight_kg} kg` : '—'}
-              />
-              <Stat label="Idade" value={driver?.age ?? '—'} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* ===== Carro ===== */}
+           {/* ===== Carro ===== */}
         <Card>
           <CardHeader>
             <CardTitle>Carro</CardTitle>
@@ -269,6 +238,37 @@ export default async function DashboardPage() {
                 </Badge>
               </div>
             ))}
+          </CardContent>
+        </Card>
+       
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* ===== Piloto ===== */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Piloto</CardTitle>
+            <CardDescription>Resumo dos atributos</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <span className="text-sm text-muted-foreground">Total</span>
+              <span className="text-2xl font-semibold">
+               {driver ? Math.floor(calculateOA(driver)) : '—'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <Stat label="Concentração" value={driver?.concentration ?? '—'} />
+              <Stat label="Talento" value={driver?.talent ?? '—'} />
+              <Stat label="Experiência" value={driver?.experience ?? '—'} />
+              <Stat label="Resistência" value={driver?.endurance ?? '—'} />
+              <Stat
+                label="Peso"
+                value={driver?.weight_kg != null ? `${driver.weight_kg} kg` : '—'}
+              />
+              <Stat label="Idade" value={driver?.age ?? '—'} />
+            </div>
           </CardContent>
         </Card>
 
