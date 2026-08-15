@@ -60,11 +60,20 @@ export function SeasonPlanner({
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
 
-  const todayISO = useMemo(() => {
-    const d = new Date()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${d.getFullYear()}-${m}-${day}`
+    const { todayISO, cutoffActive } = useMemo(() => {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      hourCycle: 'h23'
+    }).formatToParts(new Date())
+    const get = (t: string) => parts.find(p => p.type === t)?.value ?? '0'
+    return {
+      todayISO: `${get('year')}-${get('month')}-${get('day')}`,
+      cutoffActive: parseInt(get('hour'), 10) >= 18
+    }
   }, [])
 
   const [rows, setRows] = useState<Record<number, RowState>>(() => {
@@ -109,7 +118,9 @@ export function SeasonPlanner({
     }
 
     return races.map(race => {
-      const past = race.race_date !== '' && race.race_date < todayISO
+            const past =
+        race.race_date !== '' &&
+        (cutoffActive ? race.race_date <= todayISO : race.race_date < todayISO)
       const row = rows[race.race_number]
 
       const pre = {} as Record<PartSuffix, { lvl: number; wear: number }>

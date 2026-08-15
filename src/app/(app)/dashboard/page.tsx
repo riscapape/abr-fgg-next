@@ -21,16 +21,35 @@ const DAY_MS = 86_400_000
 // Fuso horário oficial do app (corridas do GPRO / managers no Brasil)
 const APP_TIMEZONE = 'America/Sao_Paulo'
 
-// "Hoje" no calendário do fuso do app — não no fuso do servidor (UTC)
+// "Hoje" ajustado ao fuso do app: a partir das 18:00 (Brasília) do dia
+// da corrida, ela já é considerada passada e a próxima vira a seguinte.
 function startOfToday(): Date {
-  const fmt = new Intl.DateTimeFormat('en-CA', {
+  const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: APP_TIMEZONE,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  })
-  const [y, m, d] = fmt.format(new Date()).split('-')
-  return new Date(`${y}-${m}-${d}T00:00:00`)
+    hour: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(new Date())
+
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? '0'
+  let y = parseInt(get('year'), 10)
+  let m = parseInt(get('month'), 10)
+  let d = parseInt(get('day'), 10)
+  const h = parseInt(get('hour'), 10)
+
+  // A partir das 18:00 BRT, adianta o "hoje" em 1 dia
+  if (h >= 18) {
+    const dt = new Date(Date.UTC(y, m - 1, d))
+    dt.setUTCDate(dt.getUTCDate() + 1)
+    y = dt.getUTCFullYear()
+    m = dt.getUTCMonth() + 1
+    d = dt.getUTCDate()
+  }
+
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return new Date(`${y}-${pad(m)}-${pad(d)}T00:00:00`)
 }
 
 function parseDate(iso: string): Date {
