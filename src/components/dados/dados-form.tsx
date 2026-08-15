@@ -416,9 +416,9 @@ export function DadosForm({
         </Button>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-12">
         {/* ===== Coluna 1: Clima + PHA ===== */}
-        <div className="space-y-6">
+       <div className="space-y-6 lg:col-span-4">
           <section className="space-y-2">
             <h2 className="text-sm font-semibold">Temperatura e Clima</h2>
             <div className="rounded-md border">
@@ -475,8 +475,39 @@ export function DadosForm({
               </table>
             </div>
           </section>
-
           <section className="space-y-2">
+            <h2 className="text-sm font-semibold">Temperaturas da Corrida</h2>
+            <div className="grid grid-cols-2 gap-2">
+              {RACE_TEMP_SLOTS.map((s, i) => (
+                <div key={s.key} className="rounded-md border p-2">
+                  <p className="mb-2 text-center text-xs font-medium">{s.label}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <span className="block text-xs text-muted-foreground">Min</span>
+                      <NumInput
+                        className="w-full"
+                        value={slots[i].min}
+                        onChange={v => updateSlot(i, 'min', v)}
+                        min={LIMITS.RACE_TEMP.min}
+                        max={LIMITS.RACE_TEMP.max}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="block text-xs text-muted-foreground">Max</span>
+                      <NumInput
+                        className="w-full"
+                        value={slots[i].max}
+                        onChange={v => updateSlot(i, 'max', v)}
+                        min={LIMITS.RACE_TEMP.min}
+                        max={LIMITS.RACE_TEMP.max}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+           <section className="space-y-2">
             <h2 className="text-sm font-semibold">PHA dos Testes</h2>
             <div className="rounded-md border">
               <table className="w-full text-sm">
@@ -521,43 +552,12 @@ export function DadosForm({
               </table>
             </div>
           </section>
+
         </div>
 
         {/* ===== Coluna 2: Temperaturas da corrida ===== */}
-        <div className="space-y-6">
-          <section className="space-y-2">
-            <h2 className="text-sm font-semibold">Temperaturas da Corrida</h2>
-            <div className="grid grid-cols-2 gap-2">
-              {RACE_TEMP_SLOTS.map((s, i) => (
-                <div key={s.key} className="rounded-md border p-2">
-                  <p className="mb-2 text-center text-xs font-medium">{s.label}</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <span className="block text-xs text-muted-foreground">Min</span>
-                      <NumInput
-                        className="w-full"
-                        value={slots[i].min}
-                        onChange={v => updateSlot(i, 'min', v)}
-                        min={LIMITS.RACE_TEMP.min}
-                        max={LIMITS.RACE_TEMP.max}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="block text-xs text-muted-foreground">Max</span>
-                      <NumInput
-                        className="w-full"
-                        value={slots[i].max}
-                        onChange={v => updateSlot(i, 'max', v)}
-                        min={LIMITS.RACE_TEMP.min}
-                        max={LIMITS.RACE_TEMP.max}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
+        <div className="space-y-6 lg:col-span-2">
+         
           <section className="space-y-2">
             <h2 className="text-sm font-semibold">Temperatura Média da Corrida</h2>
             <div className="rounded-md border">
@@ -584,6 +584,7 @@ export function DadosForm({
         </div>
 
         {/* ===== Coluna 3: Carro ===== */}
+        <div className="lg:col-span-3">
         <section className="space-y-2">
           <h2 className="text-sm font-semibold">Carro</h2>
           <div className="rounded-md border">
@@ -627,8 +628,9 @@ export function DadosForm({
             </table>
           </div>
         </section>
-
+          </div>
         {/* ===== Coluna 4: Piloto ===== */}
+        <div className="lg:col-span-3">
         <section className="space-y-2">
           <h2 className="text-sm font-semibold">Piloto</h2>
           <div className="rounded-md border">
@@ -664,6 +666,7 @@ export function DadosForm({
             </table>
           </div>
         </section>
+        </div>
       </div>
     </div>
   )
