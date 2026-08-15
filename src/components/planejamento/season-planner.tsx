@@ -17,6 +17,7 @@ import {
 } from '@/lib/gpro/formulas'
 import type { CarPartKey } from '@/lib/gpro/constants'
 import { cn } from '@/lib/utils'
+import { calculatePHA, /* ...demais imports */ } from '@/lib/gpro/formulas'
 
 const PARTS: { suffix: PartSuffix; key: CarPartKey; label: string; short: string }[] = [
   { suffix: 'Cha', key: 'chassis', label: 'Chassis', short: 'Chassis' },
@@ -31,6 +32,7 @@ const PARTS: { suffix: PartSuffix; key: CarPartKey; label: string; short: string
   { suffix: 'Sus', key: 'suspension', label: 'Suspensão', short: 'Susp.' },
   { suffix: 'Ele', key: 'electronics', label: 'Eletrônicos', short: 'Eletr.' }
 ]
+
 
 const TEST_COST = 1_000_000
 
@@ -48,8 +50,11 @@ export function SeasonPlanner({
   car,
   driver,
   races,
+  phaTestes, 
   savedPlans
 }: {
+  phaTestes: { p: number; h: number; a: number }
+
   userId: string
   seasonId: string
   car: CarFormula
@@ -185,8 +190,18 @@ export function SeasonPlanner({
         // regra do teste
         if (parse(row.test) > 0) gastos += TEST_COST
       }
-
-      return { race_number: race.race_number, past, pre, fim, critical, gastos }
+            // PHA do carro neste ponto da simulação (+ PHA dos testes)
+      const simCar = {} as CarFormula
+      for (const p of PARTS) {
+        ;(simCar as any)[`${p.key}_lvl`] = levels[p.suffix]
+      }
+      const pha = calculatePHA(simCar)
+      const carPha = {
+        p: Math.round(pha.p + phaTestes.p),
+        h: Math.round(pha.h + phaTestes.h),
+        a: Math.round(pha.a + phaTestes.a)
+      }
+      return { race_number: race.race_number, past, pre, fim, critical, gastos, carPha }
     })
   }, [races, rows, car, driver, todayISO])
 
@@ -376,6 +391,62 @@ export function SeasonPlanner({
             </tr>
           </tbody>
         </table>
+      </div>
+            {/* ===== Comparação de PHA Pista/Carro ===== */}
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold">Comparação de PHA de Pista/Carro</h2>
+        <div className="overflow-x-auto rounded-md border">
+          <table className="w-full text-xs sm:text-sm">
+            <thead>
+              <tr className="border-b bg-muted/50">
+                <th rowSpan={2} className="px-2 py-1 text-left">Corrida</th>
+                <th colSpan={3} className="border-l px-2 py-1">Pista</th>
+                <th colSpan={3} className="border-l px-2 py-1">Carro</th>
+              </tr>
+              <tr className="border-b bg-muted/50">
+                <th className="border-l px-2 py-1">P</th>
+                <th className="px-2 py-1">H</th>
+                <th className="px-2 py-1">A</th>
+                <th className="border-l px-2 py-1">P</th>
+                <th className="px-2 py-1">H</th>
+                <th className="px-2 py-1">A</th>
+              </tr>
+            </thead>
+            <tbody>
+              {races.map((race, i) => {
+                const res = results[i]
+                if (res.past) return null
+                const tp = {
+                  p: Number(race.track.power_req ?? 0),
+                  h: Number(race.track.handling_req ?? 0),
+                  a: Number(race.track.acceleration_req ?? 0)
+                }
+                const cp = res.carPha
+                const dom = (v: { p: number; h: number; a: number }) =>
+                  v.h >= v.p && v.h >= v.a ? 'h' : v.p >= v.a ? 'p' : 'a'
+                const dT = dom(tp)
+                const dC = dom(cp)
+                return (
+                  <tr key={race.race_number} className="border-b last:border-0">
+                    <td className="px-2 py-1 whitespace-nowrap">{race.track.name}</td>
+                    <td className={cn('border-l px-2 py-1 text-center', dT === 'p' && 'font-semibold text-red-600')}>{tp.p}</td>
+                    <td className={cn('px-2 py-1 text-center', dT === 'h' && 'font-semibold text-red-600')}>{tp.h}</td>
+                    <td className={cn('px-2 py-1 text-center', dT === 'a' && 'font-semibold text-red-600')}>{tp.a}</td>
+                    <td className={cn('border-l px-2 py-1 text-center', dC === 'p' && 'font-semibold text-red-600')}>{cp.p}</td>
+                    <td className={cn('px-2 py-1 text-center', dC === 'h' && 'font-semibold text-red-600')}>{cp.h}</td>
+                    <td className={cn('px-2 py-1 text-center', dC === 'a' && 'font-semibold text-red-600')}>{cp.a}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Vermelho = característica dominante de cada lado. O PHA do carro soma o
+          PHA dos testes e já reflete as substituições planejadas até cada corrida
+          — use isso para escolher quais peças trocar e deixar o carro compatível
+          com a pista.
+        </p>
       </div>
     </div>
   )

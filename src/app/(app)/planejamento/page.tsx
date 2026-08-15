@@ -20,8 +20,15 @@ export default async function PlanejamentoPage() {
   const [carRes, driverRes, seasonRes] = await Promise.all([
     supabase.from('cars').select('*').eq('user_id', user.id).maybeSingle(),
     supabase.from('drivers').select('*').eq('user_id', user.id).maybeSingle(),
-    supabase.from('seasons').select('id').eq('is_active', true).maybeSingle()
+    supabase.from('seasons').select('id').eq('is_active', true).maybeSingle(),
+    supabase.from('race_data').select('pha_p, pha_h, pha_a').eq('user_id', user.id).maybeSingle(),
   ])
+
+    const raceRes = await supabase
+    .from('race_data')
+    .select('pha_p, pha_h, pha_a')
+    .eq('user_id', user.id)
+    .maybeSingle()
 
   if (!carRes.data || !driverRes.data || !seasonRes.data) {
     return (
@@ -80,6 +87,11 @@ export default async function PlanejamentoPage() {
         driver={mapDriver(driverRes.data)}
         races={races}
         savedPlans={savedPlans}
+        phaTestes={{
+          p: Number(raceRes.data?.pha_p ?? 0),
+          h: Number(raceRes.data?.pha_h ?? 0),
+          a: Number(raceRes.data?.pha_a ?? 0)
+        }}
       />
     </div>
   )
