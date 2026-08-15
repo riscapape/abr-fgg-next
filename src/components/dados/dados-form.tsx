@@ -507,57 +507,37 @@ export function DadosForm({
               ))}
             </div>
           </section>
-           <section className="space-y-2">
-            <h2 className="text-sm font-semibold">PHA dos Testes</h2>
-            <div className="rounded-md border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-2 py-2">P</th>
-                    <th className="px-2 py-2">H</th>
-                    <th className="px-2 py-2">A</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="px-2 py-1.5">
-                      <NumInput
-                        className="w-full"
-                        value={phaP}
-                        onChange={setPhaP}
-                        min={LIMITS.PHA.min}
-                        max={LIMITS.PHA.max}
-                      />
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <NumInput
-                        className="w-full"
-                        value={phaH}
-                        onChange={setPhaH}
-                        min={LIMITS.PHA.min}
-                        max={LIMITS.PHA.max}
-                      />
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <NumInput
-                        className="w-full"
-                        value={phaA}
-                        onChange={setPhaA}
-                        min={LIMITS.PHA.min}
-                        max={LIMITS.PHA.max}
-                      />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-
         </div>
 
-        {/* ===== Coluna 2: Temperaturas da corrida ===== */}
+        {/* ===== Coluna 2: PHA e Temperaturas Médias ===== */}
         <div className="space-y-6 lg:col-span-2">
-         
+         <div>
+          <h3 className="mb-2 text-sm font-semibold">PHA dos Testes</h3>
+          <div className="rounded-md border">
+            <table className="w-full text-sm">
+              <tbody>
+                <tr className="border-b">
+                  <th className="w-10 px-2 py-1.5 text-center">P</th>
+                  <td className="px-2 py-1.5">
+                    <NumInput className="w-full" value={phaP} onChange={setPhaP} />
+                  </td>
+                </tr>
+                <tr className="border-b">
+                  <th className="w-10 px-2 py-1.5 text-center">H</th>
+                  <td className="px-2 py-1.5">
+                    <NumInput className="w-full" value={phaH} onChange={setPhaH} />
+                  </td>
+                </tr>
+                <tr>
+                  <th className="w-10 px-2 py-1.5 text-center">A</th>
+                  <td className="px-2 py-1.5">
+                    <NumInput className="w-full" value={phaA} onChange={setPhaA} />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
           <section className="space-y-2">
             <h2 className="text-sm font-semibold">Temperatura Média da Corrida</h2>
             <div className="rounded-md border">
@@ -581,6 +561,8 @@ export function DadosForm({
               </table>
             </div>
           </section>
+                  {/* ===== PHA dos Testes (vertical, compacto) ===== */}
+        
         </div>
 
         {/* ===== Coluna 3: Carro ===== */}

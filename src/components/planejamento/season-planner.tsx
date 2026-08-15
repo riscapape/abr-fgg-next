@@ -240,11 +240,23 @@ export function SeasonPlanner({
     toast.success('Planejamento salvo com sucesso.')
   }
 
+    function resetValues() {
+    const base = {} as Record<number, RowState>
+    for (const race of races) {
+      base[race.race_number] = { risk: '0', test: '0', actions: {} }
+    }
+    setRows(base)
+    setDirty(true)
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <Button onClick={handleSave} disabled={saving}>
           {saving ? 'Salvando...' : 'Salvar planejamento'}
+        </Button>
+        <Button variant="outline" onClick={resetValues}>
+          Redefinir valores
         </Button>
         {dirty && (
           <span className="text-xs font-medium text-amber-600">
