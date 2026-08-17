@@ -1,0 +1,16 @@
+name: Manter Supabase Ativo
+
+on:
+  schedule:
+    # Executa automaticamente a cada 3 dias à meia-noite (UTC)
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Permite que você force o teste manualmente
+
+jobs:
+  ping_supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Executar Consulta de Teste
+        run: |
+          curl -f -X GET "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/rest/v1/?apikey=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
