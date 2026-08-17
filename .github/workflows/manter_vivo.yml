@@ -2,9 +2,8 @@ name: Manter Supabase Ativo
 
 on:
   schedule:
-    # Executa automaticamente a cada 3 dias à meia-noite (UTC)
     - cron: '0 0 */3 * *'
-  workflow_dispatch: # Permite forçar o teste manualmente
+  workflow_dispatch:
 
 jobs:
   ping_supabase:
@@ -12,6 +11,6 @@ jobs:
     steps:
       - name: Executar Consulta de Teste
         run: |
-          curl -f -X GET "${{ secrets.SUPABASE_URL }}/auth/v1/health" \
+          curl -f -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/tracks?select=id&limit=1" \
           -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
           -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
