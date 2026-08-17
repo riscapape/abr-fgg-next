@@ -24,7 +24,7 @@ export default async function SetupPage() {
     supabase
       .from('race_data')
       .select(
-        'q1_temp, q1_weather, q2_temp, q2_weather, race_temp, race_weather, track:tracks(*)'
+        'q1_temp, q1_weather, q2_temp, q2_weather, race_temp, race_weather, track:tracks(*), practice_laps'
       )
       .eq('user_id', user.id)
       .maybeSingle()
@@ -70,6 +70,7 @@ export default async function SetupPage() {
         q2Weather={(raceRes.data.q2_weather ?? 'seco') as Weather}
         raceTemp={Number(raceRes.data.race_temp ?? 0)}
         raceWeather={(raceRes.data.race_weather ?? 'seco') as Weather}
+        practiceLaps={(raceRes.data as any)?.practice_laps ?? null}
       />
     </div>
   )

@@ -17,119 +17,62 @@ import {
   type Weather
 } from '@/lib/gpro/formulas'
 
-// Lógica de clamp das asas (igual ao SetupTabela original)
-function clampDisplay(
-  asaD: number,
-  asaT: number,
-  wing: number,
-  side: 'D' | 'T'
-): number {
-  if (side === 'D') {
-    if (asaD > 999) return 999
-    if (asaD < 0) return 0
-    if (asaT <= 0) return 0 + 2 * wing
-    if (asaT >= 999) return 999 + 2 * wing
-    return asaD
+// ===== Voltas de treino (race_data.practice_laps — jsonb coletado pela extensão) =====
+type PracticeLap = {
+  volta: number
+  lapTime: number
+  driverError: number
+  netTime: number
+  fw: number
+  rw: number
+  engine: number
+  brakes: number
+  gear: number
+  susp: number
+  tyreName: string
+}
+
+function parsePracticeLaps(raw: any): PracticeLap[] {
+  if (!raw || typeof raw !== 'object') return []
+  const laps: PracticeLap[] = []
+  for (let i = 1; i <= 8; i++) {
+    const l = (raw as any)[`lap_${i}`]
+    if (!l) continue
+    const net = Number(l.net_time ?? 0)
+    const fw = Number(l.fw ?? 0)
+    // campos zerados = volta não completada (ou ainda não feita)
+    if (!net || !fw) continue
+    laps.push({
+      volta: i,
+      lapTime: Number(l.lap_time ?? 0),
+      driverError: Number(l.driver_error ?? 0),
+      netTime: net,
+      fw,
+      rw: Number(l.rw ?? 0),
+      engine: Number(l.engine ?? 0),
+      brakes: Number(l.brakes ?? 0),
+      gear: Number(l.gear ?? 0),
+      susp: Number(l.susp ?? 0),
+      tyreName: String(l.tyre_name ?? '')
+    })
   }
-  if (asaT > 999) return 999
-  if (asaT < 0) return 0
-  if (asaD >= 999) return 999 - 2 * wing
-  if (asaD <= 0) return 0 - 2 * wing
-  return asaT
+  return laps
 }
 
-function SetupTabela({
-  title,
-  temperature,
-  weather,
-  track,
-  car,
-  driver,
-  wing
-}: {
-  title: string
-  temperature: number
-  weather: Weather
-  track: TrackFormula
-  car: CarFormula
-  driver: DriverFormula
-  wing: number
-}) {
-  const params = { track, temperature, weather, driver, car }
-  const asas = calculateWings(params)
-  const asaD = clampDisplay(asas + wing, asas - wing, wing, 'D')
-  const asaT = clampDisplay(asas + wing, asas - wing, wing, 'T')
-
-  return (
-    <Card>
-      <CardHeader className="p-4 pb-2">
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="px-2 py-2 text-center">Temp.</th>
-              <th className="px-2 py-2 text-center">Clima</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b">
-              <td className="px-2 py-2 text-center">{temperature}°C</td>
-              <td className="px-2 py-2 text-center">{weather}</td>
-            </tr>
-            <tr className="border-b bg-muted/50">
-              <th className="px-2 py-2 text-center">Peça</th>
-              <th className="px-2 py-2 text-center">Ajuste</th>
-            </tr>
-            <tr className="border-b">
-              <td className="px-2 py-2 text-center">Asa Diant.</td>
-              <td className="px-2 py-2 text-center">{asaD}</td>
-            </tr>
-            <tr className="border-b">
-              <td className="px-2 py-2 text-center">Asa Tras.</td>
-              <td className="px-2 py-2 text-center">{asaT}</td>
-            </tr>
-            <tr className="border-b">
-              <td className="px-2 py-2 text-center">Motor</td>
-              <td className="px-2 py-2 text-center">{calculateEngine(params)}</td>
-            </tr>
-            <tr className="border-b">
-              <td className="px-2 py-2 text-center">Freios</td>
-              <td className="px-2 py-2 text-center">{calculateBrakes(params)}</td>
-            </tr>
-            <tr className="border-b">
-              <td className="px-2 py-2 text-center">Câmbio</td>
-              <td className="px-2 py-2 text-center">{calculateGearbox(params)}</td>
-            </tr>
-            <tr>
-              <td className="px-2 py-2 text-center">Suspensão</td>
-              <td className="px-2 py-2 text-center">
-                {calculateSuspension(params)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </CardContent>
-    </Card>
-  )
+function splitTime(total: number) {
+  const msTotal = Math.round(total * 1000)
+  return {
+    minutes: Math.floor(msTotal / 60000),
+    seconds: Math.floor((msTotal % 60000) / 1000),
+    milliseconds: msTotal % 1000
+  }
 }
 
-type AttemptRow = {
-  asaD: string
-  asaT: string
-  min: string
-  seg: string
-  mil: string
+function fmtTime(total: number) {
+  if (!total || total <= 0) return '—'
+  const { minutes, seconds, milliseconds } = splitTime(total)
+  return `${minutes}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`
 }
-
-const emptyRow = (): AttemptRow => ({
-  asaD: '0',
-  asaT: '0',
-  min: '0',
-  seg: '0',
-  mil: '0'
-})
 
 export function SetupPlanner({
   car,
@@ -140,7 +83,8 @@ export function SetupPlanner({
   q2Temp,
   q2Weather,
   raceTemp,
-  raceWeather
+  raceWeather,
+  practiceLaps
 }: {
   car: CarFormula
   driver: DriverFormula
@@ -151,97 +95,69 @@ export function SetupPlanner({
   q2Weather: Weather
   raceTemp: number
   raceWeather: Weather
+  practiceLaps?: any
 }) {
-  // Divisão de Asas (-499 a 499)
   const [wingStr, setWingStr] = useState('0')
   const wing = useMemo(() => {
     const n = parseInt(wingStr, 10)
     return Number.isNaN(n) ? 0 : Math.min(499, Math.max(-499, n))
   }, [wingStr])
 
-  // Tentativas de ajuste de asas (Iguais, 1, 2)
-  const [rows, setRows] = useState<{
-    iguais: AttemptRow
-    a1: AttemptRow
-    a2: AttemptRow
-  }>({ iguais: emptyRow(), a1: emptyRow(), a2: emptyRow() })
+  // ----- Voltas completadas (do banco) -----
+  const laps = useMemo(() => parsePracticeLaps(practiceLaps), [practiceLaps])
 
-  function updateRow(
-    key: 'iguais' | 'a1' | 'a2',
-    field: keyof AttemptRow,
-    value: string
-  ) {
-    setRows(prev => ({
-      ...prev,
-      [key]: { ...prev[key], [field]: value }
-    }))
-  }
+  // Dropdown 1..n ao lado de cada tentativa do ajuste de asas
+  const [sel, setSel] = useState<string[]>(['', '', ''])
+  const selectedLaps = sel.map(v => laps.find(l => String(l.volta) === v))
 
-  // Fórmula Analyzer: wingSplit com o setup de asas do Q1
-  const asasQ1 = calculateWings({
-    track,
-    temperature: q1Temp,
-    weather: q1Weather,
-    driver,
-    car
-  })
-  const analyzer = Math.round(
-    calculateWingSplit(track, asasQ1, car, driver, q1Temp, q1Weather)
-  )
-
-  // Diferença ideal (fórmula das 3 tentativas)
   const difIdeal = useMemo(() => {
-    const n = (s: string) => {
-      const v = parseInt(s, 10)
-      return Number.isNaN(v) ? 0 : v
-    }
-    return calculateWingAdjustment({
-      attempt1: {
-        frontWing: n(rows.iguais.asaD),
-        rearWing: n(rows.iguais.asaT),
-        minutes: n(rows.iguais.min),
-        seconds: n(rows.iguais.seg),
-        milliseconds: n(rows.iguais.mil)
-      },
-      attempt2: {
-        frontWing: n(rows.a1.asaD),
-        rearWing: n(rows.a1.asaT),
-        minutes: n(rows.a1.min),
-        seconds: n(rows.a1.seg),
-        milliseconds: n(rows.a1.mil)
-      },
-      attempt3: {
-        frontWing: n(rows.a2.asaD),
-        rearWing: n(rows.a2.asaT),
-        minutes: n(rows.a2.min),
-        seconds: n(rows.a2.seg),
-        milliseconds: n(rows.a2.mil)
-      }
+    const [t1, t2, t3] = selectedLaps
+    if (!t1 || !t2 || !t3) return 0
+    const att = (l: PracticeLap) => ({
+      frontWing: l.fw,
+      rearWing: l.rw,
+      ...splitTime(l.netTime)
     })
-  }, [rows])
+    const v = calculateWingAdjustment({
+      attempt1: att(t1),
+      attempt2: att(t2),
+      attempt3: att(t3)
+    })
+    return Number.isFinite(v) ? v : 0
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel, laps])
 
-  const toNum = (s: string) => {
-    const v = parseInt(s, 10)
-    return Number.isNaN(v) ? 0 : v
+  // ----- Fórmula Analyzer -----
+  const asasQ1 = calculateWings({ track, temperature: q1Temp, weather: q1Weather, driver, car })
+  const analyzer = Math.round(calculateWingSplit(track, asasQ1, car, driver, q1Temp, q1Weather))
+
+  // ----- Setups -----
+  const mkSetup = (temperature: number, weather: Weather) => {
+    const p = { track, temperature, weather, driver, car }
+    return {
+      asas: calculateWings(p),
+      motor: calculateEngine(p),
+      freios: calculateBrakes(p),
+      cambio: calculateGearbox(p),
+      suspensao: calculateSuspension(p)
+    }
   }
-
-  const attemptKeys: { key: 'iguais' | 'a1' | 'a2'; label: string }[] = [
-    { key: 'iguais', label: 'Iguais' },
-    { key: 'a1', label: '1' },
-    { key: 'a2', label: '2' }
+  const setups = [
+    { titulo: 'Setup Q1', temp: q1Temp, clima: q1Weather, s: mkSetup(q1Temp, q1Weather) },
+    { titulo: 'Setup Q2', temp: q2Temp, clima: q2Weather, s: mkSetup(q2Temp, q2Weather) },
+    { titulo: 'Setup Corrida', temp: raceTemp, clima: raceWeather, s: mkSetup(raceTemp, raceWeather) }
   ]
 
   return (
     <div className="space-y-6">
       {/* ===== Topo ===== */}
-            <div className="flex flex-wrap items-end gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
           <span className="text-sm font-medium">Pista</span>
           <div className="flex h-8 items-center rounded-md border bg-muted/30 px-3 text-sm">
             {track.name}
           </div>
         </div>
-
         <div className="space-y-1">
           <span className="text-sm font-medium">Divisão de Asas</span>
           <Input
@@ -254,14 +170,12 @@ export function SetupPlanner({
             onBlur={() => wingStr === '' && setWingStr('0')}
           />
         </div>
-
-                <div className="space-y-1">
+        <div className="space-y-1">
           <span className="text-sm font-medium">Fórmula Analyzer</span>
           <div className="flex h-8 items-center justify-center rounded-md border bg-muted/30 px-3 text-sm font-semibold">
             {analyzer}
           </div>
         </div>
-
         <div className="space-y-1">
           <span className="text-sm font-medium">Diferença ideal</span>
           <div className="flex h-8 items-center justify-center rounded-md border bg-muted/30 px-3 text-sm font-semibold">
@@ -269,131 +183,210 @@ export function SetupPlanner({
           </div>
         </div>
       </div>
+
       {/* ===== Setups Q1 / Q2 / Corrida ===== */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <SetupTabela
-          title="Setup Q1"
-          temperature={q1Temp}
-          weather={q1Weather}
-          track={track}
-          car={car}
-          driver={driver}
-          wing={wing}
-        />
-        <SetupTabela
-          title="Setup Q2"
-          temperature={q2Temp}
-          weather={q2Weather}
-          track={track}
-          car={car}
-          driver={driver}
-          wing={wing}
-        />
-        <SetupTabela
-          title="Setup Corrida"
-          temperature={raceTemp}
-          weather={raceWeather}
-          track={track}
-          car={car}
-          driver={driver}
-          wing={wing}
-        />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* ===== Indicação do ajuste de asas ===== */}
-        <div className="space-y-6">
-          <Card>
+        {setups.map(({ titulo, temp, clima, s }) => (
+          <Card key={titulo}>
             <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-base">
-                Indicação do ajuste de asas
-              </CardTitle>
+              <CardTitle className="text-base">{titulo}</CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <table className="w-full text-sm">
+              <table className="w-full text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th className="px-2 py-2 text-center">Ajuste</th>
-                    <th className="px-2 py-2 text-center">Diferença</th>
+                    <th className="px-2 py-1 text-center">Temp.</th>
+                    <th className="px-2 py-1 text-center">Clima</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b">
-                    <td className="px-2 py-2 text-center">Iguais</td>
-                    <td className="px-2 py-2 text-center">0</td>
+                    <td className="px-2 py-1 text-center">{temp}°C</td>
+                    <td className="px-2 py-1 text-center">{clima}</td>
+                  </tr>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-2 py-1 text-center">Peça</th>
+                    <th className="px-2 py-1 text-center">Ajuste</th>
                   </tr>
                   <tr className="border-b">
-                    <td className="px-2 py-2 text-center">1</td>
-                    <td className="px-2 py-2 text-center">{track.setup_split}</td>
+                    <td className="px-2 py-1 text-center">Asa Diant.</td>
+                    <td className="px-2 py-1 text-center">{s.asas + wing}</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="px-2 py-1 text-center">Asa Tras.</td>
+                    <td className="px-2 py-1 text-center">{s.asas - wing}</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="px-2 py-1 text-center">Motor</td>
+                    <td className="px-2 py-1 text-center">{s.motor}</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="px-2 py-1 text-center">Freios</td>
+                    <td className="px-2 py-1 text-center">{s.freios}</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="px-2 py-1 text-center">Câmbio</td>
+                    <td className="px-2 py-1 text-center">{s.cambio}</td>
                   </tr>
                   <tr>
-                    <td className="px-2 py-2 text-center">2</td>
-                    <td className="px-2 py-2 text-center">
-                      {2 * track.setup_split}
-                    </td>
+                    <td className="px-2 py-1 text-center">Suspensão</td>
+                    <td className="px-2 py-1 text-center">{s.suspensao}</td>
                   </tr>
                 </tbody>
               </table>
             </CardContent>
           </Card>
-        </div>
+        ))}
+      </div>
 
-        {/* ===== Ajustes de Asas (tentativas) ===== */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* ===== Indicação do ajuste de asas ===== */}          
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base">Indicação do ajuste de asas</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <table className="w-full text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-2 py-1 text-center">Ajuste</th>
+                  <th className="px-2 py-1 text-center">Diferença</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b">
+                  <td className="px-2 py-1 text-center">Iguais</td>
+                  <td className="px-2 py-1 text-center">0</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-2 py-1 text-center">1</td>
+                  <td className="px-2 py-1 text-center">{track.setup_split}</td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-1 text-center">2</td>
+                  <td className="px-2 py-1 text-center">{2 * track.setup_split}</td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-1 text-center font-semibold">Ideal</td>
+                  <td className="px-2 py-1 text-center font-semibold">{Math.round(difIdeal)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+        {/* ===== Ajustes de Asas (dropdown 1..n por tentativa) ===== */}
         <Card className="lg:col-span-2">
           <CardHeader className="p-4 pb-2">
             <CardTitle className="text-base">Ajustes de Asas</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <div className="overflow-x-auto rounded-md border">
-              <table className="w-full text-sm">
+              <table className="w-full text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th className="px-2 py-2" rowSpan={2}></th>
-                    <th className="px-2 py-2 text-center" colSpan={2}>
-                      Ajuste de Asas
-                    </th>
-                    <th className="px-2 py-2 text-center" colSpan={3}>
-                      Tempo de Volta
-                    </th>
-                  </tr>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-2 py-2 text-center">Asa D</th>
-                    <th className="px-2 py-2 text-center">Asa T</th>
-                    <th className="px-2 py-2 text-center">min</th>
-                    <th className="px-2 py-2 text-center">seg</th>
-                    <th className="px-2 py-2 text-center">mil</th>
+                    <th className="px-2 py-1 text-center">Tentativa</th>
+                    <th className="px-2 py-1 text-center">Volta de treino</th>
+                    <th className="px-2 py-1 text-center">Asa D</th>
+                    <th className="px-2 py-1 text-center">Asa T</th>
+                    <th className="px-2 py-1 text-center">min</th>
+                    <th className="px-2 py-1 text-center">seg</th>
+                    <th className="px-2 py-1 text-center">mil</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {attemptKeys.map(a => (
-                    <tr key={a.key} className="border-b last:border-0">
-                      <td className="px-2 py-1.5 text-center">{a.label}</td>
-                      {(
-                        ['asaD', 'asaT', 'min', 'seg', 'mil'] as (keyof AttemptRow)[]
-                      ).map(field => (
-                        <td key={field} className="px-2 py-1.5 text-center">
-                          <Input
-                            type="number"
-                            className="h-7 w-12 sm:h-8 sm:w-20"
-                            value={rows[a.key][field]}
+                  {[0, 1, 2].map(i => {
+                    const lap = selectedLaps[i]
+                    const t = lap ? splitTime(lap.netTime) : null
+                    return (
+                      <tr key={i} className="border-b last:border-0">
+                        <td className="px-2 py-1 text-center">{i + 1}</td>
+                        <td className="px-2 py-1 text-center">
+                          <select
+                            className="h-7 w-20 rounded-md border border-input bg-background px-1 text-center"
+                            value={sel[i]}
                             onChange={e =>
-                              updateRow(a.key, field, e.target.value)
+                              setSel(p => p.map((x, idx) => (idx === i ? e.target.value : x)))
                             }
-                          />
+                            disabled={laps.length === 0}
+                          >
+                            <option value="">—</option>
+                            {laps.map(l => (
+                              <option key={l.volta} value={String(l.volta)}>
+                                {l.volta}
+                              </option>
+                            ))}
+                          </select>
                         </td>
-                      ))}
-                    </tr>
-                  ))}
+                        <td className="px-2 py-1 text-center">{lap?.fw ?? '—'}</td>
+                        <td className="px-2 py-1 text-center">{lap?.rw ?? '—'}</td>
+                        <td className="px-2 py-1 text-center">{t?.minutes ?? '—'}</td>
+                        <td className="px-2 py-1 text-center">{t?.seconds ?? '—'}</td>
+                        <td className="px-2 py-1 text-center">{t?.milliseconds ?? '—'}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Faça 3 tentativas de asa (diferença entre Asa D e Asa T) com seus
-              tempos de volta para calcular a diferença ideal.
+              Escolha 3 voltas de treino coletadas pela extensão — Asa D/T e o tempo líquido
+              entram sozinhos no cálculo da diferença ideal.
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* ===== Dados das voltas de treino (do banco) ===== */}
+      {laps.length > 0 ? (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold">
+            Dados das voltas de treino ({laps.length}/8) — {track.name}
+          </h2>
+          <div className="overflow-x-auto rounded-md border">
+            <table className="w-full text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-2 py-1 text-center">Volta</th>
+                  <th className="px-2 py-1 text-center">Tempo de volta</th>
+                  <th className="px-2 py-1 text-center">Erro do piloto</th>
+                  <th className="px-2 py-1 text-center">Tempo líquido</th>
+                  <th className="px-2 py-1 text-center">AsaD</th>
+                  <th className="px-2 py-1 text-center">AsaT</th>
+                  <th className="px-2 py-1 text-center">Motor</th>
+                  <th className="px-2 py-1 text-center">Freios</th>
+                  <th className="px-2 py-1 text-center">Câmb</th>
+                  <th className="px-2 py-1 text-center">Susp</th>
+                  <th className="px-2 py-1 text-center">Pneus</th>
+                </tr>
+              </thead>
+              <tbody>
+                {laps.map(l => (
+                  <tr key={l.volta} className="border-b last:border-0">
+                    <td className="px-2 py-1 text-center">{l.volta}</td>
+                    <td className="px-2 py-1 text-center">{fmtTime(l.lapTime)}</td>
+                    <td className="px-2 py-1 text-center">
+                      {l.driverError ? `${l.driverError.toFixed(3)}s` : '—'}
+                    </td>
+                    <td className="px-2 py-1 text-center font-semibold">{fmtTime(l.netTime)}</td>
+                    <td className="px-2 py-1 text-center">{l.fw}</td>
+                    <td className="px-2 py-1 text-center">{l.rw}</td>
+                    <td className="px-2 py-1 text-center">{l.engine}</td>
+                    <td className="px-2 py-1 text-center">{l.brakes}</td>
+                    <td className="px-2 py-1 text-center">{l.gear}</td>
+                    <td className="px-2 py-1 text-center">{l.susp}</td>
+                    <td className="px-2 py-1 text-center">{l.tyreName}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Nenhuma volta de treino completada ainda — colete pela extensão na página
+          Qualify.asp do GPRO.
+        </p>
+      )}
     </div>
   )
 }
