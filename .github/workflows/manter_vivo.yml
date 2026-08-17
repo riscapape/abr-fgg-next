@@ -9,8 +9,32 @@ jobs:
   ping_supabase:
     runs-on: ubuntu-latest
     steps:
-      - name: Executar Consulta de Teste
+      - name: Checar secrets configurados
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          curl -f -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/tracks?select=id&limit=1" \
-          -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-          -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Secrets ausentes. Crie SUPABASE_URL e SUPABASE_ANON_KEY em Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "URL: $SUPABASE_URL"
+          echo "Anon key (qtd. caracteres): ${#SUPABASE_ANON_KEY}"
+
+      - name: Executar Consulta de Teste
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          STATUS=$(curl -s -o body.json -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/tracks?select=id&limit=1")
+          echo "HTTP: $STATUS"
+          echo "Body:"
+          cat body.json
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Supabase respondeu HTTP $STATUS — veja o body acima."
+            exit 1
+          fi
+          echo "✔ Ping OK — projeto ativo."
