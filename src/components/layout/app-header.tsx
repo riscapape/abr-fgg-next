@@ -9,7 +9,7 @@ export function AppHeader({ profile }: { profile: SessionProfile }) {
     { href: '/estrategias', label: 'Estratégias' },
     { href: '/desgaste', label: 'Desgaste' },
     { href: '/testes', label: 'Testes' },
-    { href: '/setup', label: 'Setup' },
+    { href: '/qualys', label: 'Qualys' },
     { href: '/planejamento', label: 'Planejamento' },
     { href: '/mercado', label: 'Mercado' },
     ...(profile.role === 'owner'
