@@ -8,7 +8,7 @@ export function AppHeader({ profile }: { profile: SessionProfile }) {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/dados', label: 'Dados' },
     { href: '/estrategias', label: 'Estratégias' },
-    { href: '/desgates', label: 'Desgastes' },
+    { href: '/desgaste', label: 'Desgaste' },
     { href: '/testes', label: 'Testes' },
     { href: '/qualys', label: 'Qualys' },
     { href: '/planejamento', label: 'Planejamento' },
