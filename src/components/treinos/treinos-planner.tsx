@@ -79,7 +79,8 @@ const COMMENT_TEXTS: Record<PartKey, Record<number, string>> = {
     [-2]: 'Câmbio: A relação do câmbio é muito longa',
     [-1]: 'Câmbio: Eu não posso tirar vantagem da força do motor. Coloque a relação do câmbio um pouco menor',
     [1]: 'Câmbio: Estou muito frequentemente no vermelho. Coloque a relação do câmbio um pouco mais alta',
-    [2]: 'Câmbio: O intervalo entre marchas está muito curto',
+   // [2]: 'Câmbio: O intervalo entre marchas está muito curto',
+    [2]: 'Câmbio: A relação do câmbio é muito curta',
     [3]: 'Câmbio: Eu sinto que o motor vai explodir. Coloque o intervalo de marchas bem maior.'
   },
   sus: {
@@ -180,6 +181,87 @@ function clampWings(front: number, rear: number, ws: number): [number, number] {
   return [f, r]
 }
 
+// ===== Volta sugerida p/ ajuste de asas (port de getWingSplitPracticeLap) =====
+function wingSplitPracticeLap(
+  laps: PracticeLap[],
+  trackSplit: number,
+  bestSplit: number,
+  initial: { asas: number; motor: number; freios: number; cambio: number; suspensao: number }
+): { wngF: number; wngR: number; eng: number; bra: number; gea: number; sus: number } {
+  // maior grupo com mesmo setup não-asa (empate → melhor tempo líquido)
+  const groups = new Map<string, PracticeLap[]>()
+  for (const l of laps) {
+    const k = `${l.engine}|${l.brakes}|${l.gear}|${l.susp}|${l.tyreName}`
+    groups.set(k, [...(groups.get(k) ?? []), l])
+  }
+  let best: PracticeLap[] | null = null
+  for (const g of groups.values()) {
+    if (
+      !best ||
+      g.length > best.length ||
+      (g.length === best.length && g[0].netTime < best[0].netTime)
+    ) {
+      best = g
+    }
+  }
+
+  const ref0 = trackSplit !== 0 ? trackSplit : 70
+
+  // sem voltas: setup da fórmula com o split da pista
+  if (!best || best.length === 0) {
+    const wings = clampWings(initial.asas, initial.asas, trackSplit)
+    return {
+      wngF: wings[0],
+      wngR: wings[1],
+      eng: initial.motor,
+      bra: initial.freios,
+      gea: initial.cambio,
+      sus: initial.suspensao
+    }
+  }
+
+  const build = (ref: number) => {
+    let base = best![0]
+    let wings: [number, number]
+    if (best!.length === 1) {
+      wings = clampWings(base.fw, base.rw, ref)
+    } else if (best!.length === 2) {
+      wings = clampWings(base.fw, base.rw, ref * 2)
+      if (best![1].fw === wings[0] && best![1].rw === wings[1]) {
+        base = best![1]
+        wings = clampWings(base.fw, base.rw, ref * 2)
+      }
+    } else {
+      // 3+ voltas no grupo: usa a Sugerida (bestWingSplit)
+      wings = clampWings(base.fw, base.rw, bestSplit)
+    }
+    return {
+      wngF: wings[0],
+      wngR: wings[1],
+      eng: base.engine,
+      bra: base.brakes,
+      gea: base.gear,
+      sus: base.susp
+    }
+  }
+
+  // se o setup sugerido já foi usado, inverte/amplia o split (ref × −1.5) e tenta de novo
+  let ref = ref0
+  let settings = build(ref)
+  for (let count = 0; count < 5; count++) {
+    const used = laps.some(
+      l =>
+        l.fw === settings.wngF && l.rw === settings.wngR &&
+        l.engine === settings.eng && l.brakes === settings.bra &&
+        l.gear === settings.gea && l.susp === settings.sus
+    )
+    if (!used) return settings
+    ref = Math.trunc(ref * -1.5)
+    settings = build(ref)
+  }
+  return settings
+}
+
 export function TreinosPlanner({
   car, driver, track, laps,
   q2Temp, q2Weather, raceTemp, raceWeather
@@ -195,8 +277,9 @@ export function TreinosPlanner({
 }) {
   const zs = Math.round(calculateZS(driver)) // ZS do piloto (DT = 0)
 
- 
-  const [mode, setMode] = useState<'ideal' | 'refinar' | 'inicial'>('ideal')
+   const [mode, setMode] = useState<'ideal' | 'refinar' | 'inicial' | 'asas'>(
+    laps.length ? 'ideal' : 'inicial'
+  )
 
   const calc = useMemo(() => {
     const ps = {
@@ -319,6 +402,14 @@ export function TreinosPlanner({
       const [f, r] = clampWings(nextW, nextW, suggested)
       return { wngF: f, wngR: r, eng: ps.eng.next(), bra: ps.bra.next(), gea: ps.gea.next(), sus: ps.sus.next() }
     }
+     if (mode === 'asas') {
+      return wingSplitPracticeLap(
+        laps,
+        track.setup_split || 70,
+        calc.suggested,
+        mkSetup(raceTemp, raceWeather)
+      )
+    }
     return {
       wngF: wingFront,
       wngR: wingRear,
@@ -327,7 +418,7 @@ export function TreinosPlanner({
       gea: ps.gea.ideal,
       sus: ps.sus.ideal
     }
-  }, [mode, calc])
+  }, [mode, calc, wing, raceTemp, raceWeather, laps, track.setup_split])
 
   const rows: { label: string; ideal: string; use: number }[] = [
     { label: 'Asa Dianteira', ideal: `${calc.wingFront} ±${calc.ps.wng.error}`, use: use.wngF },
@@ -366,7 +457,15 @@ export function TreinosPlanner({
                   <th className="px-2 py-1">Feedback</th>
                 </tr>
               </thead>
-              <tbody>
+                           <tbody>
+                {laps.length === 0 && (
+                  <tr>
+                    <td colSpan={12} className="px-2 py-4 text-center text-muted-foreground">
+                      Nenhuma volta de treino completada — use o modo "volta inicial"
+                      (tudo 500) para começar os treinos no GPRO.
+                    </td>
+                  </tr>
+                )}
                 {laps.map(l => (
                   <tr key={l.volta} className="border-b last:border-0">
                     <td className="px-2 py-1 text-center font-semibold">{l.volta}</td>
@@ -379,28 +478,30 @@ export function TreinosPlanner({
                     <td className="px-2 py-1 text-center">{l.brakes}</td>
                     <td className="px-2 py-1 text-center">{l.gear}</td>
                     <td className="px-2 py-1 text-center">{l.susp}</td>
-                   <td className="px-2 py-1 text-center">{l.tyreName}</td>
-<td className="px-2 py-1 text-center text-xs text-muted-foreground">
-  {(() => {
-    const f = parseLapComments(l.comments)
-    const parts: string[] = []
-    if (f.wng) parts.push(`Asas ${f.wng > 0 ? '+' : ''}${f.wng}`)
-    if (f.eng) parts.push(`Motor ${f.eng > 0 ? '+' : ''}${f.eng}`)
-    if (f.bra) parts.push(`Freios ${f.bra > 0 ? '+' : ''}${f.bra}`)
-    if (f.gea) parts.push(`Câmbio ${f.gea > 0 ? '+' : ''}${f.gea}`)
-    if (f.sus) parts.push(`Susp ${f.sus > 0 ? '+' : ''}${f.sus}`)
-    return parts.length ? parts.join(', ') : 'OK'
-  })()}
-</td>
+                    <td className="px-2 py-1 text-center">{l.tyreName}</td>
+                    <td className="px-2 py-1 text-center text-xs text-muted-foreground">
+                      {(() => {
+                        const f = parseLapComments(l.comments)
+                        const parts: string[] = []
+                        if (f.wng) parts.push(`Asas ${f.wng > 0 ? '+' : ''}${f.wng}`)
+                        if (f.eng) parts.push(`Motor ${f.eng > 0 ? '+' : ''}${f.eng}`)
+                        if (f.bra) parts.push(`Freios ${f.bra > 0 ? '+' : ''}${f.bra}`)
+                        if (f.gea) parts.push(`Câmbio ${f.gea > 0 ? '+' : ''}${f.gea}`)
+                        if (f.sus) parts.push(`Susp ${f.sus > 0 ? '+' : ''}${f.sus}`)
+                        return parts.length ? parts.join(', ') : 'OK'
+                      })()}
+                    </td>
                   </tr>
                 ))}
-                <tr className="bg-muted/30">
-                  <td className="px-2 py-1 text-center font-semibold">M.</td>
-                  <td className="px-2 py-1 text-center">{fmtTime(calc.avg.tempo)}</td>
-                  <td className="px-2 py-1 text-center">{fmtTime(calc.avg.erro)}</td>
-                  <td className="px-2 py-1 text-center">{fmtTime(calc.avg.liquido)}</td>
-                  <td colSpan={8} />
-                </tr>
+                {laps.length > 0 && (
+                  <tr className="bg-muted/30">
+                    <td className="px-2 py-1 text-center font-semibold">M.</td>
+                    <td className="px-2 py-1 text-center">{fmtTime(calc.avg.tempo)}</td>
+                    <td className="px-2 py-1 text-center">{fmtTime(calc.avg.erro)}</td>
+                    <td className="px-2 py-1 text-center">{fmtTime(calc.avg.liquido)}</td>
+                    <td colSpan={8} />
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -442,6 +543,7 @@ export function TreinosPlanner({
             <option value="ideal">Desejo usar o ajuste ideal</option>
             <option value="refinar">Desejo refinar o ajuste</option>
             <option value="inicial">Desejo calcular valores para a volta inicial</option>
+            <option value="asas">Desejo fazer uma volta de ajuste de asas</option>
           </select>
 
           <div className="overflow-x-auto rounded-md border">

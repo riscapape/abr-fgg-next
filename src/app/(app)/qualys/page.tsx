@@ -54,7 +54,7 @@ export default async function TreinosPage() {
     }
   }
 
-  if (!driverRes.data || !trackRow || laps.length === 0) {
+ if (!carRes.data || !driverRes.data || !trackRow) {
     return (
       <div className="space-y-6">
        <h1 className="text-2xl font-semibold">Qualys</h1>

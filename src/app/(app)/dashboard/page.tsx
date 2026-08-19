@@ -349,8 +349,8 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <a
-              href="/abr-fgg-collector.zip"
-              download="abr-fgg-collector.zip"
+              href="/abr-fgg-collector-1.1.0.zip"
+              download="abr-fgg-collector-1.1.0.zip"
               className={buttonVariants({ className: 'w-full' })}
             >
               Baixar extensão (.zip)

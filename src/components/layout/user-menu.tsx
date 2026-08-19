@@ -98,6 +98,9 @@ export function UserMenu({ profile }: { profile: SessionProfile }) {
 <DropdownMenuItem render={<Link href="/planejamento" />}>
   Planejamento
 </DropdownMenuItem>
+<DropdownMenuItem render={<Link href="/telemetrias" />}>
+  Telemetrias
+</DropdownMenuItem>
 <DropdownMenuItem render={<Link href="/mercado" />}>
   Mercado
 </DropdownMenuItem>

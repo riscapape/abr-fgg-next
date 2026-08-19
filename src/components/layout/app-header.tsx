@@ -11,6 +11,7 @@ export function AppHeader({ profile }: { profile: SessionProfile }) {
     { href: '/testes', label: 'Testes' },
     { href: '/qualys', label: 'Qualys' },
     { href: '/planejamento', label: 'Planejamento' },
+    { href: '/telemetrias', label: 'Telemetrias' },
     { href: '/mercado', label: 'Mercado' },
     ...(profile.role === 'owner'
       ? [
