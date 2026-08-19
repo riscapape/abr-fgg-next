@@ -1,64 +1,36 @@
 import Link from 'next/link'
-import { UserMenu } from '@/components/layout/user-menu'
 import type { SessionProfile } from '@/types'
+import { UserMenu } from '@/components/layout/user-menu'
+import { AppNav } from '@/components/layout/app-nav'
 
 export function AppHeader({ profile }: { profile: SessionProfile }) {
   const links = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/dados', label: 'Dados' },
     { href: '/estrategias', label: 'Estratégias' },
-    { href: '/desgaste', label: 'Desgaste' },
+    { href: '/desgates', label: 'Desgastes' },
     { href: '/testes', label: 'Testes' },
     { href: '/qualys', label: 'Qualys' },
     { href: '/planejamento', label: 'Planejamento' },
     { href: '/telemetrias', label: 'Telemetrias' },
-    { href: '/mercado', label: 'Mercado' },
-    ...(profile.role === 'owner'
-      ? [
-          { href: '/admin/users', label: 'Usuários' },
-          { href: '/admin/seasons', label: 'Temporadas' }
-        ]
-      : [])
+    { href: '#mercado', label: 'Mercado' }
   ]
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background">
-      <div className="mx-auto flex h-12 w-full max-w-6xl items-center justify-between px-3 sm:h-14 sm:px-4">
-        <Link
-          href="/dashboard"
-          className="whitespace-nowrap text-base font-semibold"
-        >
+    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
+        <Link href="/" className="text-base font-semibold">
           ABR-FGG
         </Link>
 
-        {/* Nav desktop */}
-        <nav className="hidden items-center gap-4 text-sm md:flex">
-          {links.map(l => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="hidden items-center gap-1 md:flex">
+          <AppNav links={links} />
+        </div>
 
-        <UserMenu profile={profile} />
+        <div className="flex items-center gap-2">
+          <UserMenu profile={profile} links={links} />
+        </div>
       </div>
-
-      {/* Abas roláveis no mobile */}
-      <nav className="flex gap-1 overflow-x-auto border-t px-2 py-1 md:hidden">
-        {links.map(l => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className="whitespace-nowrap rounded-md px-2.5 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            {l.label}
-          </Link>
-        ))}
-      </nav>
     </header>
   )
 }

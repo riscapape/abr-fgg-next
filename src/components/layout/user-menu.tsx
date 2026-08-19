@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import type { SessionProfile } from '@/types'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
+import React from 'react'
 
 function getInitials(name?: string | null, email?: string) {
   const base = name?.trim() || email?.trim() || 'U'
@@ -26,8 +27,14 @@ function getInitials(name?: string | null, email?: string) {
   }
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
 }
-
-export function UserMenu({ profile }: { profile: SessionProfile }) {
+type NavItem = { href: string; label: string }
+export function UserMenu({
+  profile,
+  links = []
+}: {
+  profile: SessionProfile
+  links?: NavItem[]
+}) {
   const router = useRouter()
 
   async function handleSignOut() {
@@ -76,34 +83,19 @@ export function UserMenu({ profile }: { profile: SessionProfile }) {
 
         <DropdownMenuGroup>
           {/* CORREÇÃO: Usando a prop 'render' do Base UI para o Next.js Link */}
-          <DropdownMenuItem render={<Link href="/dashboard" />}>
-            Dashboard
-          </DropdownMenuItem>
-
-         <DropdownMenuItem render={<Link href="/dados" />}>
-            Dados
-          </DropdownMenuItem>
-          <DropdownMenuItem render={<Link href="/estrategias" />}>
-  Estratégias
-</DropdownMenuItem>
-<DropdownMenuItem render={<Link href="/desgaste" />}>
-  Desgaste
-</DropdownMenuItem>
-<DropdownMenuItem render={<Link href="/testes" />}>
-  Testes
-</DropdownMenuItem>
-<DropdownMenuItem render={<Link href="/qualys" />}>
-  Qualys
-</DropdownMenuItem>
-<DropdownMenuItem render={<Link href="/planejamento" />}>
-  Planejamento
-</DropdownMenuItem>
-<DropdownMenuItem render={<Link href="/telemetrias" />}>
-  Telemetrias
-</DropdownMenuItem>
-<DropdownMenuItem render={<Link href="/mercado" />}>
-  Mercado
-</DropdownMenuItem>
+         
+{links.map(l =>
+  l.href === '#mercado' ? (
+    <React.Fragment key="#mercado">
+      <DropdownMenuItem render={<Link href="/mercado" />}>Mercado Pilotos</DropdownMenuItem>
+      <DropdownMenuItem render={<Link href="/mercado-dt" />}>Mercado DTs</DropdownMenuItem>
+    </React.Fragment>
+  ) : (
+    <DropdownMenuItem key={l.href} render={<Link href={l.href} />}>
+      {l.label}
+    </DropdownMenuItem>
+  )
+)}
           <DropdownMenuItem render={<Link href="/account/profile" />}>
             Minha conta
           </DropdownMenuItem>
