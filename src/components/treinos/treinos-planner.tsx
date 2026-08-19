@@ -674,7 +674,7 @@ export function TreinosPlanner({
             </div>
 
             <table className="w-full text-xs sm:text-sm">
-              <thead>
+                           <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="px-2 py-1">Peça</th>
                   <th className="px-2 py-1 text-center">Seco</th>
@@ -684,10 +684,10 @@ export function TreinosPlanner({
               </thead>
               <tbody>
                 <tr className="border-b">
-                  <td className="px-2 py-1">Asa Diant.</td>
-                  <td className="px-2 py-1 text-center">{drySetup.asas + wing}</td>
-                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.asas + wing}</td>
-                  <td className="px-2 py-1 text-center">{wetSetup.asas + wing}</td>
+                  <td className="px-2 py-1">Temperatura</td>
+                  <td className="px-2 py-1 text-center">{raceTemp}°C</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceTemp}°C</td>
+                  <td className="px-2 py-1 text-center">{raceTemp}°C</td>
                 </tr>
                 <tr className="border-b">
                   <td className="px-2 py-1">Asa Tras.</td>

@@ -131,6 +131,9 @@ export function DadosForm({
     }))
   )
 
+  // Destaque para campos NÃO coletados pela extensão (ajuste manual)
+const manualCls = 'border-amber-400/70 bg-amber-400/10'
+
   function updateSlot(index: number, field: 'min' | 'max', value: string) {
     setSlots(prev => prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)))
   }
@@ -342,9 +345,13 @@ export function DadosForm({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" >
       {/* ===== Linha superior ===== */}
-           <div className="flex flex-wrap items-end gap-3">
+            <p className="flex items-center gap-2 rounded-md border border-amber-400/50 bg-amber-400/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+        Campos destacados não são coletados pela extensão — revise e ajuste
+        manualmente antes de salvar.
+      </p>
+           <div className="flex flex-wrap items-end gap-3" >
         <div className="space-y-1">
           <Label>Pista</Label>
           <select
@@ -361,10 +368,11 @@ export function DadosForm({
           </select>
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1" >
           <Label>Pneu</Label>
           <select
             className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+            
             value={tireId}
             onChange={e => setTireId(e.target.value)}
           >
@@ -379,7 +387,7 @@ export function DadosForm({
         <div className="space-y-1">
           <Label>Temperatura</Label>
           <NumInput
-            className="w-24"
+            className={`h-8 w-24 ${manualCls}`}
             value={airTemp}
             onChange={setAirTemp}
             min={LIMITS.AIR_TEMP.min}
@@ -391,7 +399,7 @@ export function DadosForm({
         <div className="space-y-1">
           <Label>Risco CT</Label>
           <NumInput
-            className="w-20"
+            className={`h-8 w-24 ${manualCls}`}
             value={ctRisk}
             onChange={setCtRisk}
             min={LIMITS.CT_RISK.min}
@@ -402,7 +410,7 @@ export function DadosForm({
                 <div className="space-y-1">
           <Label>Tempo do pit</Label>
           <NumInput
-            className="w-24"
+            className={`h-8 w-24 ${manualCls}`}
             value={pitTime}
             onChange={setPitTime}
             min={LIMITS.PIT_TIME.min}
@@ -427,7 +435,10 @@ export function DadosForm({
                   <tr className="border-b bg-muted/50">
                     <th className="px-2 py-2">Q1</th>
                     <th className="px-2 py-2">Q2</th>
-                    <th className="px-2 py-2">Corrida</th>
+                    <th className="bg-amber-400/10 px-2 py-2 text-center">
+                    Corrida
+                    
+                  </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -450,7 +461,7 @@ export function DadosForm({
                         max={LIMITS.RACE_TEMP.max}
                       />
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td className={`px-2 py-1.5 ${manualCls}`}>
                       <NumInput
                         className="w-full"
                         value={raceTemp}
@@ -467,7 +478,7 @@ export function DadosForm({
                     <td className="px-2 py-1.5">
                       <WeatherSelect value={q2Weather} onChange={setQ2Weather} />
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td className={`px-2 py-1.5 ${manualCls}`}>
                       <WeatherSelect value={raceWeather} onChange={setRaceWeather} />
                     </td>
                   </tr>
