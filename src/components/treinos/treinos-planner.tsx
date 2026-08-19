@@ -311,11 +311,6 @@ export function TreinosPlanner({
       suspensao: calculateSuspension(p)
     }
   }
-  const setups = [
-    { titulo: 'Setup Q2', temp: q2Temp, clima: q2Weather, s: mkSetup(q2Temp, q2Weather) },
-    { titulo: 'Setup Corrida', temp: raceTemp, clima: raceWeather, s: mkSetup(raceTemp, raceWeather) }
-  ]
-
     // ===== Split de asas (port de calculateWingSplit) =====
     const baseSplit = track.setup_split || 70
     const groups = new Map<string, PracticeLap[]>()
@@ -371,6 +366,8 @@ export function TreinosPlanner({
 
     // Divisão de asas: default = sugerida pelos treinos (editável)
   const [wingStr, setWingStr] = useState(() => String(calc.suggested))
+    // % de chuva no setup misto da corrida (seco = 100 − wetPct, soma sempre 100%)
+  const [wetPct, setWetPct] = useState(() => (raceWeather === 'chuva' ? 100 : 0))
   const wing = useMemo(() => {
     const n = parseInt(wingStr, 10)
     return Number.isNaN(n) ? 0 : Math.min(499, Math.max(-499, n))
@@ -387,10 +384,20 @@ export function TreinosPlanner({
     }
   }
 
-  const setups = [
-    { titulo: 'Setup Q2', temp: q2Temp, clima: q2Weather, s: mkSetup(q2Temp, q2Weather) },
-    { titulo: 'Setup Corrida', temp: raceTemp, clima: raceWeather, s: mkSetup(raceTemp, raceWeather) }
-  ]
+   const q2Setup = mkSetup(q2Temp, q2Weather)
+
+  // ===== Setup Corrida misto (seco/chuva) =====
+  const drySetup = mkSetup(raceTemp, 'seco')
+  const wetSetup = mkSetup(raceTemp, 'chuva')
+  const blend = (a: number, b: number) =>
+    Math.round((a * (100 - wetPct) + b * wetPct) / 100)
+  const raceSetup = {
+    asas: blend(drySetup.asas, wetSetup.asas),
+    motor: blend(drySetup.motor, wetSetup.motor),
+    freios: blend(drySetup.freios, wetSetup.freios),
+    cambio: blend(drySetup.cambio, wetSetup.cambio),
+    suspensao: blend(drySetup.suspensao, wetSetup.suspensao)
+  }
   // ===== Valores "Use:" por modo =====
   const use = useMemo(() => {
     const { ps, suggested, wingFront, wingRear } = calc
@@ -612,59 +619,111 @@ export function TreinosPlanner({
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {setups.map(({ titulo, temp, clima, s }) => (
-            <Card key={titulo}>
-              <CardHeader className="p-4 pb-2">
-                <CardTitle className="text-base">{titulo}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <table className="w-full text-xs sm:text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-2 py-1 text-center">Temp.</th>
-                      <th className="px-2 py-1 text-center">Clima</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b">
-                      <td className="px-2 py-1 text-center">{temp}°C</td>
-                      <td className="px-2 py-1 text-center">{clima}</td>
-                    </tr>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-2 py-1 text-center">Peça</th>
-                      <th className="px-2 py-1 text-center">Ajuste</th>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="px-2 py-1 text-center">Asa Diant.</td>
-                      <td className="px-2 py-1 text-center">{s.asas + wing}</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="px-2 py-1 text-center">Asa Tras.</td>
-                      <td className="px-2 py-1 text-center">{s.asas - wing}</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="px-2 py-1 text-center">Motor</td>
-                      <td className="px-2 py-1 text-center">{s.motor}</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="px-2 py-1 text-center">Freios</td>
-                      <td className="px-2 py-1 text-center">{s.freios}</td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="px-2 py-1 text-center">Câmbio</td>
-                      <td className="px-2 py-1 text-center">{s.cambio}</td>
-                    </tr>
-                    <tr>
-                      <td className="px-2 py-1 text-center">Suspensão</td>
-                      <td className="px-2 py-1 text-center">{s.suspensao}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+             <div className="grid gap-6 lg:grid-cols-2">
+        {/* ===== Setup Q2 (clima definido) ===== */}
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base">Setup Q2</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <table className="w-full text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-2 py-1 text-center">Temp.</th>
+                  <th className="px-2 py-1 text-center">Clima</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b">
+                  <td className="px-2 py-1 text-center">{q2Temp}°C</td>
+                  <td className="px-2 py-1 text-center">{q2Weather}</td>
+                </tr>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-2 py-1 text-center">Peça</th>
+                  <th className="px-2 py-1 text-center">Ajuste</th>
+                </tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Asa Diant.</td><td className="px-2 py-1 text-center">{q2Setup.asas + wing}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Asa Tras.</td><td className="px-2 py-1 text-center">{q2Setup.asas - wing}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Motor</td><td className="px-2 py-1 text-center">{q2Setup.motor}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Freios</td><td className="px-2 py-1 text-center">{q2Setup.freios}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Câmbio</td><td className="px-2 py-1 text-center">{q2Setup.cambio}</td></tr>
+                <tr><td className="px-2 py-1 text-center">Suspensão</td><td className="px-2 py-1 text-center">{q2Setup.suspensao}</td></tr>
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+
+        {/* ===== Setup Corrida MISTO (seco/chuva) ===== */}
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base">Setup Corrida (misto seco/chuva)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 p-4 pt-0">
+            <div className="flex items-center gap-3 text-xs sm:text-sm">
+              <span className="w-24 whitespace-nowrap">Seco {100 - wetPct}%</span>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={wetPct}
+                onChange={e => setWetPct(Number(e.target.value))}
+                className="w-full accent-blue-600"
+              />
+              <span className="w-24 whitespace-nowrap text-right">Chuva {wetPct}%</span>
+            </div>
+
+            <table className="w-full text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-2 py-1">Peça</th>
+                  <th className="px-2 py-1 text-center">Seco</th>
+                  <th className="px-2 py-1 text-center">Misto</th>
+                  <th className="px-2 py-1 text-center">Chuva</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b">
+                  <td className="px-2 py-1">Asa Diant.</td>
+                  <td className="px-2 py-1 text-center">{drySetup.asas + wing}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.asas + wing}</td>
+                  <td className="px-2 py-1 text-center">{wetSetup.asas + wing}</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-2 py-1">Asa Tras.</td>
+                  <td className="px-2 py-1 text-center">{drySetup.asas - wing}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.asas - wing}</td>
+                  <td className="px-2 py-1 text-center">{wetSetup.asas - wing}</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-2 py-1">Motor</td>
+                  <td className="px-2 py-1 text-center">{drySetup.motor}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.motor}</td>
+                  <td className="px-2 py-1 text-center">{wetSetup.motor}</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-2 py-1">Freios</td>
+                  <td className="px-2 py-1 text-center">{drySetup.freios}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.freios}</td>
+                  <td className="px-2 py-1 text-center">{wetSetup.freios}</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="px-2 py-1">Câmbio</td>
+                  <td className="px-2 py-1 text-center">{drySetup.cambio}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.cambio}</td>
+                  <td className="px-2 py-1 text-center">{wetSetup.cambio}</td>
+                </tr>
+                <tr>
+                  <td className="px-2 py-1">Suspensão</td>
+                  <td className="px-2 py-1 text-center">{drySetup.suspensao}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.suspensao}</td>
+                  <td className="px-2 py-1 text-center">{wetSetup.suspensao}</td>
+                </tr>
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      </div>
       </div>
     </div>
   )
