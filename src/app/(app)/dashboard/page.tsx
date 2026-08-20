@@ -21,43 +21,28 @@ const DAY_MS = 86_400_000
 // Fuso horário oficial do app (corridas do GPRO / managers no Brasil)
 const APP_TIMEZONE = 'America/Sao_Paulo'
 
-// "Hoje" ajustado ao fuso do app: a partir das 18:00 (Brasília) do dia
-// da corrida, ela já é considerada passada e a próxima vira a seguinte.
+// "Hoje" em Brasília - SEM adiantar o dia
 function startOfToday(): Date {
-  const parts = new Intl.DateTimeFormat('en-CA', {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: APP_TIMEZONE,
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    hourCycle: 'h23'
-  }).formatToParts(new Date())
+    day: '2-digit'
+  })
 
-  const get = (t: string) => parts.find(p => p.type === t)?.value ?? '0'
-  let y = parseInt(get('year'), 10)
-  let m = parseInt(get('month'), 10)
-  let d = parseInt(get('day'), 10)
-  const h = parseInt(get('hour'), 10)
+  const date = formatter.format(new Date())
 
-  // A partir das 18:00 BRT, adianta o "hoje" em 1 dia
-  if (h >= 18) {
-    const dt = new Date(Date.UTC(y, m - 1, d))
-    dt.setUTCDate(dt.getUTCDate() + 1)
-    y = dt.getUTCFullYear()
-    m = dt.getUTCMonth() + 1
-    d = dt.getUTCDate()
-  }
-
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return new Date(`${y}-${pad(m)}-${pad(d)}T00:00:00`)
+  // Cria a data como UTC para evitar qualquer mudança de dia pelo timezone
+  return new Date(`${date}T00:00:00.000Z`)
 }
 
 function parseDate(iso: string): Date {
-  return new Date(`${iso}T00:00:00`)
+  return new Date(`${iso}T00:00:00.000Z`)
 }
 
 function formatFull(d: Date): string {
   return d.toLocaleDateString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
     weekday: 'long',
     day: '2-digit',
     month: '2-digit',
@@ -131,15 +116,50 @@ export default async function DashboardPage() {
     races = racesRes.data ?? []
   }
 
-  const today = startOfToday()
+   const today = startOfToday()
 
-  const nextRace =
-    races.find(r => r.race_date && parseDate(r.race_date) >= today) ?? null
+const now = new Date(
+  new Date().toLocaleString('en-US', {
+    timeZone: APP_TIMEZONE
+  })
+)
 
-  const nextDays = nextRace?.race_date
-    ? Math.round((parseDate(nextRace.race_date).getTime() - today.getTime()) / DAY_MS)
-    : null
+const currentHour = now.getHours()
 
+const RACE_DAYS = [2, 5] // terça = 2, sexta = 5
+
+const isRaceDay = RACE_DAYS.includes(today.getUTCDay())
+
+const raceHasStarted =
+  isRaceDay && currentHour >= 17
+
+const nextRace = races.find(r => {
+  if (!r.race_date) return false
+
+  const raceDate = parseDate(r.race_date)
+
+  // Corridas anteriores a hoje
+  if (raceDate < today) {
+    return false
+  }
+
+  // Depois das 17h de terça/sexta,
+  // pula somente a corrida de hoje.
+  if (
+    raceHasStarted &&
+    raceDate.getTime() === today.getTime()
+  ) {
+    return false
+  }
+
+  return true
+}) ?? null
+
+const nextDays = nextRace?.race_date
+  ? Math.round(
+      (parseDate(nextRace.race_date).getTime() - today.getTime()) / DAY_MS
+    )
+  : null
   // ===== Resumo do carro =====
   const levels = CAR_PARTS.map(p => Number(car?.[`${p.key}_lvl`] ?? 0))
   const avgLevel = levels.length
@@ -277,8 +297,8 @@ export default async function DashboardPage() {
                 {races.map(r => {
                   const d = r.race_date ? parseDate(r.race_date) : null
                   const days = d
-                    ? Math.round((d.getTime() - today.getTime()) / DAY_MS)
-                    : null
+  ? Math.round((d.getTime() - today.getTime()) / DAY_MS)
+  : null
                   const isNext = nextRace && r.race_number === nextRace.race_number
 
                   return (
@@ -297,9 +317,12 @@ export default async function DashboardPage() {
                         <span className="font-medium">{r.track?.name}</span>
                       </div>
                       <div className="text-right text-xs text-muted-foreground">
-                        {d
-                          ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-                          : '—'}
+                        {r.race_date
+  ? (() => {
+      const [year, month, day] = r.race_date.split('-')
+      return `${day}/${month}`
+    })()
+  : '—'}
                         <span className="block">
                           {days != null ? daysLabel(days) : ''}
                         </span>
