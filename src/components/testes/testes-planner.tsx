@@ -216,13 +216,14 @@ export function TestesPlanner({
             </table>
           </CardContent>
         </Card>
-
+        <div>      
         <Card>
-          <CardHeader className="p-4 pb-2">
+          <CardContent className="p-4 pt-0">
+            <div>
+                <CardHeader className="p-4 pb-2">
             <CardTitle className="text-base">Combustível do stint</CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <table className="w-full text-xs sm:text-sm">
+               <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="px-2 py-1 text-center">Quantidade</th>
@@ -236,14 +237,9 @@ export function TestesPlanner({
                 </tr>
               </tbody>
             </table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="p-4 pb-2">
+             <CardHeader className="p-4 pb-2">
             <CardTitle className="text-base">Desgaste final dos pneus</CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
             <table className="w-full text-xs sm:text-sm">
               <thead>
                 <tr className="border-b bg-muted/50">
@@ -267,8 +263,10 @@ export function TestesPlanner({
                 ))}
               </tbody>
             </table>
+            </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   )
