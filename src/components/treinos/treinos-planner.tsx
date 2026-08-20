@@ -60,7 +60,8 @@ const COMMENT_TEXTS: Record<PartKey, Record<number, string>> = {
   },
   eng: {
     [-3]: 'Motor: Não, não, não!!! Favoreça muito mais as baixas rotações!',
-    [-2]: 'Motor: As rotações estão muito altas',
+    //[-2]: 'Motor: As rotações estão muito altas',
+    [-2]: 'Motor: As revoluções do motor estão muito altas',
     [-1]: 'Motor: Tente favorecer um pouco mais as baixas rotações',
     [1]: 'Motor: Eu sinto que não tenho força suficiente no motor durante as retas',
     [2]: 'Motor: A força do motor nas retas não é suficiente',
@@ -264,12 +265,14 @@ function wingSplitPracticeLap(
 
 export function TreinosPlanner({
   car, driver, track, laps,
-  q2Temp, q2Weather, raceTemp, raceWeather
+  q1Temp, q1Weather, q2Temp, q2Weather, raceTemp, raceWeather
 }: {
   car: CarFormula
   driver: DriverFormula
   track: TrackFormula
   laps: PracticeLap[]
+  q1Temp: number
+  q1Weather: Weather
   q2Temp: number
   q2Weather: Weather
   raceTemp: number
@@ -277,9 +280,7 @@ export function TreinosPlanner({
 }) {
   const zs = Math.round(calculateZS(driver)) // ZS do piloto (DT = 0)
 
-   const [mode, setMode] = useState<'ideal' | 'refinar' | 'inicial' | 'asas'>(
-    laps.length ? 'ideal' : 'inicial'
-  )
+     const [mode, setMode] = useState<'ideal' | 'refinar' | 'inicial' | 'asas'>('ideal')
 
   const calc = useMemo(() => {
     const ps = {
@@ -384,6 +385,7 @@ export function TreinosPlanner({
     }
   }
 
+     const q1Setup = mkSetup(q1Temp, q1Weather)
    const q2Setup = mkSetup(q2Temp, q2Weather)
 
   // ===== Setup Corrida misto (seco/chuva) =====
@@ -398,16 +400,44 @@ export function TreinosPlanner({
     cambio: blend(drySetup.cambio, wetSetup.cambio),
     suspensao: blend(drySetup.suspensao, wetSetup.suspensao)
   }
+
+    // ===== Antes × Depois do refino =====
+  const [showRefined, setShowRefined] = useState(true)
+  const hasLaps = laps.length > 0
+  const applyRef = showRefined && hasLaps
+  const off = {
+    asas: applyRef ? calc.ps.wng.rawIdeal - q1Setup.asas : 0,
+    motor: applyRef ? calc.ps.eng.ideal - q1Setup.motor : 0,
+    freios: applyRef ? calc.ps.bra.ideal - q1Setup.freios : 0,
+    cambio: applyRef ? calc.ps.gea.ideal - q1Setup.cambio : 0,
+    suspensao: applyRef ? calc.ps.sus.ideal - q1Setup.suspensao : 0
+  }
+  const applyOff = (s: { asas: number; motor: number; freios: number; cambio: number; suspensao: number }) => ({
+    asas: s.asas + off.asas,
+    motor: s.motor + off.motor,
+    freios: s.freios + off.freios,
+    cambio: s.cambio + off.cambio,
+    suspensao: s.suspensao + off.suspensao
+  })
+    const q1F = applyOff(q1Setup)
+  const q2F = applyOff(q2Setup)
+  const dryF = applyOff(drySetup)
+  const wetF = applyOff(wetSetup)
+  const raceF = applyOff(raceSetup)
+
   // ===== Valores "Use:" por modo =====
   const use = useMemo(() => {
     const { ps, suggested, wingFront, wingRear } = calc
     if (mode === 'inicial') {
       return { wngF: 500, wngR: 500, eng: 500, bra: 500, gea: 500, sus: 500 }
     }
-    if (mode === 'refinar') {
+       if (mode === 'refinar') {
+      // refina com asas IGUAIS (sem split) — isola o feedback das demais peças
       const nextW = ps.wng.next()
-      const [f, r] = clampWings(nextW, nextW, suggested)
-      return { wngF: f, wngR: r, eng: ps.eng.next(), bra: ps.bra.next(), gea: ps.gea.next(), sus: ps.sus.next() }
+      return {
+        wngF: nextW, wngR: nextW,
+        eng: ps.eng.next(), bra: ps.bra.next(), gea: ps.gea.next(), sus: ps.sus.next()
+      }
     }
      if (mode === 'asas') {
       return wingSplitPracticeLap(
@@ -417,6 +447,18 @@ export function TreinosPlanner({
         mkSetup(raceTemp, raceWeather)
       )
     }
+       // ideal: "antes do refino" ou sem voltas → fórmula pura (Q1); "depois" → refinado
+    if (laps.length === 0 || !showRefined) {
+      return {
+        wngF: q1Setup.asas + wing,
+        wngR: q1Setup.asas - wing,
+        eng: q1Setup.motor,
+        bra: q1Setup.freios,
+        gea: q1Setup.cambio,
+        sus: q1Setup.suspensao
+      }
+    }
+    // com voltas: ideal refinado pelo PartSetup + split sugerido
     return {
       wngF: wingFront,
       wngR: wingRear,
@@ -425,8 +467,7 @@ export function TreinosPlanner({
       gea: ps.gea.ideal,
       sus: ps.sus.ideal
     }
-  }, [mode, calc, wing, raceTemp, raceWeather, laps, track.setup_split])
-
+  }, [mode, calc, wing, laps, showRefined, q1Temp, q1Weather, q2Temp, q2Weather, raceTemp, raceWeather, track.setup_split])
   const rows: { label: string; ideal: string; use: number }[] = [
     { label: 'Asa Dianteira', ideal: `${calc.wingFront} ±${calc.ps.wng.error}`, use: use.wngF },
     { label: 'Asa Traseira', ideal: `${calc.wingRear} ±${calc.ps.wng.error}`, use: use.wngR },
@@ -523,16 +564,7 @@ export function TreinosPlanner({
             <span className="text-xs text-muted-foreground">
               ZS piloto: {zs} • DT: 0
             </span>
-          </div>
-
-                    {/* ===== Feedback do piloto por peça (satisfação) ===== */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium">
-              Feedback do piloto por volta (conforme o comentário no GPRO):
-            </p>
-            ...
-          </div>
-         
+          </div>         
         </CardContent>
       </Card>
 
@@ -613,13 +645,59 @@ export function TreinosPlanner({
               onBlur={() => wingStr === '' && setWingStr(String(calc.suggested))}
             />
           </div>
+                 <div className="space-y-1">
+            <span className="text-sm font-medium">Setup exibido</span>
+            <select
+              className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+              value={applyRef ? 'depois' : 'antes'}
+              onChange={e => setShowRefined(e.target.value === 'depois')}
+              disabled={!hasLaps}
+            >
+              <option value="antes">Antes do refino (fórmula)</option>
+              <option value="depois">Depois do refino (treinos)</option>
+            </select>
+          </div>
           <p className="text-xs text-muted-foreground">
-            Default = sugerida pelos treinos ({calc.suggested}). As tabelas já saem com
-            as asas ajustadas por ela.
+            Default = sugerida pelos treinos ({calc.suggested}). "Depois" aplica o
+            refino (refinado − fórmula Q1) sobre o setup de cada sessão.
           </p>
+          
         </div>
 
-             <div className="grid gap-6 lg:grid-cols-2">
+                      <div className="grid gap-6 lg:grid-cols-3">
+        {/* ===== Setup Q1 ===== */}
+        <Card>
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base">Setup Q1</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <table className="w-full text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-2 py-1 text-center">Temp.</th>
+                  <th className="px-2 py-1 text-center">Clima</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b">
+                  <td className="px-2 py-1 text-center">{q1Temp}°C</td>
+                  <td className="px-2 py-1 text-center">{q1Weather}</td>
+                </tr>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-2 py-1 text-center">Peça</th>
+                  <th className="px-2 py-1 text-center">Ajuste</th>
+                </tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Asa Diant.</td><td className="px-2 py-1 text-center">{q1F.asas + wing}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Asa Tras.</td><td className="px-2 py-1 text-center">{q1F.asas - wing}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Motor</td><td className="px-2 py-1 text-center">{q1F.motor}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Freios</td><td className="px-2 py-1 text-center">{q1F.freios}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Câmbio</td><td className="px-2 py-1 text-center">{q1F.cambio}</td></tr>
+                <tr><td className="px-2 py-1 text-center">Suspensão</td><td className="px-2 py-1 text-center">{q1F.suspensao}</td></tr>
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+
         {/* ===== Setup Q2 (clima definido) ===== */}
         <Card>
           <CardHeader className="p-4 pb-2">
@@ -642,12 +720,12 @@ export function TreinosPlanner({
                   <th className="px-2 py-1 text-center">Peça</th>
                   <th className="px-2 py-1 text-center">Ajuste</th>
                 </tr>
-                <tr className="border-b"><td className="px-2 py-1 text-center">Asa Diant.</td><td className="px-2 py-1 text-center">{q2Setup.asas + wing}</td></tr>
-                <tr className="border-b"><td className="px-2 py-1 text-center">Asa Tras.</td><td className="px-2 py-1 text-center">{q2Setup.asas - wing}</td></tr>
-                <tr className="border-b"><td className="px-2 py-1 text-center">Motor</td><td className="px-2 py-1 text-center">{q2Setup.motor}</td></tr>
-                <tr className="border-b"><td className="px-2 py-1 text-center">Freios</td><td className="px-2 py-1 text-center">{q2Setup.freios}</td></tr>
-                <tr className="border-b"><td className="px-2 py-1 text-center">Câmbio</td><td className="px-2 py-1 text-center">{q2Setup.cambio}</td></tr>
-                <tr><td className="px-2 py-1 text-center">Suspensão</td><td className="px-2 py-1 text-center">{q2Setup.suspensao}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Asa Diant.</td><td className="px-2 py-1 text-center">{q2F.asas + wing}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Asa Tras.</td><td className="px-2 py-1 text-center">{q2F.asas - wing}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Motor</td><td className="px-2 py-1 text-center">{q2F.motor}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Freios</td><td className="px-2 py-1 text-center">{q2F.freios}</td></tr>
+                <tr className="border-b"><td className="px-2 py-1 text-center">Câmbio</td><td className="px-2 py-1 text-center">{q2F.cambio}</td></tr>
+                <tr><td className="px-2 py-1 text-center">Suspensão</td><td className="px-2 py-1 text-center">{q2F.suspensao}</td></tr>
               </tbody>
             </table>
           </CardContent>
@@ -682,7 +760,7 @@ export function TreinosPlanner({
                   <th className="px-2 py-1 text-center">Chuva</th>
                 </tr>
               </thead>
-              <tbody>
+                          <tbody>
                 <tr className="border-b">
                   <td className="px-2 py-1">Temperatura</td>
                   <td className="px-2 py-1 text-center">{raceTemp}°C</td>
@@ -690,40 +768,51 @@ export function TreinosPlanner({
                   <td className="px-2 py-1 text-center">{raceTemp}°C</td>
                 </tr>
                 <tr className="border-b">
+                  <td className="px-2 py-1">Asa Diant.</td>
+                  <td className="px-2 py-1 text-center">{dryF.asas + wing}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceF.asas + wing}</td>
+                  <td className="px-2 py-1 text-center">{wetF.asas + wing}</td>
+                </tr>
+                <tr className="border-b">
                   <td className="px-2 py-1">Asa Tras.</td>
-                  <td className="px-2 py-1 text-center">{drySetup.asas - wing}</td>
-                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.asas - wing}</td>
-                  <td className="px-2 py-1 text-center">{wetSetup.asas - wing}</td>
+                  <td className="px-2 py-1 text-center">{dryF.asas - wing}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceF.asas - wing}</td>
+                  <td className="px-2 py-1 text-center">{wetF.asas - wing}</td>
                 </tr>
                 <tr className="border-b">
                   <td className="px-2 py-1">Motor</td>
-                  <td className="px-2 py-1 text-center">{drySetup.motor}</td>
-                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.motor}</td>
-                  <td className="px-2 py-1 text-center">{wetSetup.motor}</td>
+                  <td className="px-2 py-1 text-center">{dryF.motor}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceF.motor}</td>
+                  <td className="px-2 py-1 text-center">{wetF.motor}</td>
                 </tr>
                 <tr className="border-b">
                   <td className="px-2 py-1">Freios</td>
-                  <td className="px-2 py-1 text-center">{drySetup.freios}</td>
-                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.freios}</td>
-                  <td className="px-2 py-1 text-center">{wetSetup.freios}</td>
+                  <td className="px-2 py-1 text-center">{dryF.freios}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceF.freios}</td>
+                  <td className="px-2 py-1 text-center">{wetF.freios}</td>
                 </tr>
                 <tr className="border-b">
                   <td className="px-2 py-1">Câmbio</td>
-                  <td className="px-2 py-1 text-center">{drySetup.cambio}</td>
-                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.cambio}</td>
-                  <td className="px-2 py-1 text-center">{wetSetup.cambio}</td>
+                  <td className="px-2 py-1 text-center">{dryF.cambio}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceF.cambio}</td>
+                  <td className="px-2 py-1 text-center">{wetF.cambio}</td>
                 </tr>
                 <tr>
                   <td className="px-2 py-1">Suspensão</td>
-                  <td className="px-2 py-1 text-center">{drySetup.suspensao}</td>
-                  <td className="px-2 py-1 text-center font-semibold">{raceSetup.suspensao}</td>
-                  <td className="px-2 py-1 text-center">{wetSetup.suspensao}</td>
+                  <td className="px-2 py-1 text-center">{dryF.suspensao}</td>
+                  <td className="px-2 py-1 text-center font-semibold">{raceF.suspensao}</td>
+                  <td className="px-2 py-1 text-center">{wetF.suspensao}</td>
                 </tr>
               </tbody>
             </table>
           </CardContent>
         </Card>
       </div>
+      <p className="text-xs text-muted-foreground">
+        {hasLaps
+          ? 'Setups Q2/Corrida = fórmula da sessão + refino dos treinos (refinado − fórmula Q1). Asas usam a Divisão de Asas acima.'
+          : 'Sem voltas de treino ainda — setups Q2/Corrida são apenas a fórmula de cada sessão.'}
+      </p>
       </div>
     </div>
   )

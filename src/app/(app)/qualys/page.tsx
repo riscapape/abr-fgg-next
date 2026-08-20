@@ -17,7 +17,7 @@ export default async function TreinosPage() {
     supabase.from('drivers').select('*').eq('user_id', user.id).maybeSingle(),
     supabase
       .from('race_data')
-      .select('practice_laps, air_temp, q2_temp, q2_weather, race_temp, race_weather, track:tracks(*)')
+           .select('practice_laps, air_temp, q1_temp, q1_weather, q2_temp, q2_weather, race_temp, race_weather, track:tracks(*)')
       .eq('user_id', user.id)
       .maybeSingle()
   ])
@@ -84,10 +84,12 @@ export default async function TreinosPage() {
         driver={mapDriver(driverRes.data)}
         track={mapTrack(trackRow)}
         laps={laps}
-        q2Temp={Number(raceRes.data?.q2_temp ?? 0)}
-        q2Weather={(raceRes.data?.q2_weather ?? 'seco') as Weather}
-               raceTemp={Number(raceRes.data?.air_temp ?? 0)}
-        raceWeather={(raceRes.data?.race_weather ?? 'seco') as Weather}
+        q1Temp={Number(raceRes.data?.q1_temp ?? 0)}
+          q1Weather={(raceRes.data?.q1_weather ?? 'seco') as Weather}
+          q2Temp={Number(raceRes.data?.q2_temp ?? 0)}
+          q2Weather={(raceRes.data?.q2_weather ?? 'seco') as Weather}
+          raceTemp={Number(raceRes.data?.air_temp ?? 0)}
+          raceWeather={(raceRes.data?.race_weather ?? 'seco') as Weather}
       />
     </div>
   )
