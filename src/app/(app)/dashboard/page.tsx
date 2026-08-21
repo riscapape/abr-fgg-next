@@ -17,27 +17,28 @@ import { cn } from '@/lib/utils'
 import { calculateOA } from '@/lib/gpro/formulas'
 
 const DAY_MS = 86_400_000
-
-// Fuso horário oficial do app (corridas do GPRO / managers no Brasil)
 const APP_TIMEZONE = 'America/Sao_Paulo'
 
-// "Hoje" em Brasília - SEM adiantar o dia
-function startOfToday(): Date {
-  const formatter = new Intl.DateTimeFormat('en-CA', {
+// "Agora" com os campos de parede = horário de Brasília
+function nowBrazil() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: APP_TIMEZONE,
     year: 'numeric',
     month: '2-digit',
-    day: '2-digit'
-  })
-
-  const date = formatter.format(new Date())
-
-  // Cria a data como UTC para evitar qualquer mudança de dia pelo timezone
-  return new Date(`${date}T00:00:00.000Z`)
+    day: '2-digit',
+    hour: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(new Date())
+  const get = (t: string) => Number(parts.find(p => p.type === t)?.value ?? 0)
+  const y = get('year')
+  const m = get('month')
+  const d = get('day')
+  const h = get('hour')
+  return { h, date: new Date(y, m - 1, d) }
 }
 
 function parseDate(iso: string): Date {
-  return new Date(`${iso}T00:00:00.000Z`)
+  return new Date(`${iso}T00:00:00`)
 }
 
 function formatFull(d: Date): string {
@@ -116,50 +117,29 @@ export default async function DashboardPage() {
     races = racesRes.data ?? []
   }
 
-   const today = startOfToday()
+    const now = nowBrazil()
+  const today = now.date
 
-const now = new Date(
-  new Date().toLocaleString('en-US', {
-    timeZone: APP_TIMEZONE
-  })
-)
+  // "Dia de corrida" = dia que TEM corrida no calendário (não depende de ter/sex)
+  const hasRaceToday = races.some(
+    r => r.race_date && parseDate(r.race_date).getTime() === today.getTime()
+  )
+  // Só depois das 17h BRT de um dia de corrida ela "vira"
+  const raceDayPassed = hasRaceToday && now.h >= 17
 
-const currentHour = now.getHours()
+  const nextRace =
+    races.find(r => {
+      if (!r.race_date) return false
+      const rd = parseDate(r.race_date).getTime()
+      if (rd === today.getTime() && raceDayPassed) return false // corrida de hoje já passou
+      return rd >= today.getTime()
+    }) ?? null
 
-const RACE_DAYS = [2, 5] // terça = 2, sexta = 5
+  const nextDays = nextRace?.race_date
+    ? Math.round((parseDate(nextRace.race_date).getTime() - today.getTime()) / DAY_MS)
+    : null
 
-const isRaceDay = RACE_DAYS.includes(today.getUTCDay())
 
-const raceHasStarted =
-  isRaceDay && currentHour >= 17
-
-const nextRace = races.find(r => {
-  if (!r.race_date) return false
-
-  const raceDate = parseDate(r.race_date)
-
-  // Corridas anteriores a hoje
-  if (raceDate < today) {
-    return false
-  }
-
-  // Depois das 17h de terça/sexta,
-  // pula somente a corrida de hoje.
-  if (
-    raceHasStarted &&
-    raceDate.getTime() === today.getTime()
-  ) {
-    return false
-  }
-
-  return true
-}) ?? null
-
-const nextDays = nextRace?.race_date
-  ? Math.round(
-      (parseDate(nextRace.race_date).getTime() - today.getTime()) / DAY_MS
-    )
-  : null
   // ===== Resumo do carro =====
   const levels = CAR_PARTS.map(p => Number(car?.[`${p.key}_lvl`] ?? 0))
   const avgLevel = levels.length

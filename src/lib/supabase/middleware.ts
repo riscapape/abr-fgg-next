@@ -39,13 +39,23 @@ export async function updateSession(request: NextRequest) {
   // Verifica se o usuário está ativo
   let isActive = true
   if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_active')
-      .eq('id', user.id)
-      .maybeSingle()
+   const {
+  data: profile,
+  error: profileError,
+} = await supabase
+  .from('profiles')
+  .select('is_active')
+  .eq('id', user.id)
+  .maybeSingle()
 
-    isActive = profile?.is_active !== false
+if (profileError) {
+  console.error('Erro ao verificar perfil:', profileError)
+  
+  // fail closed
+  isActive = false
+} else {
+  isActive = profile?.is_active === true
+}
   }
 
   // Usuário desativado tentando acessar área protegida -> volta pro login

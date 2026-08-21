@@ -5,7 +5,16 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
 
   const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') ?? '/dashboard'
+ const allowedPaths = [
+  '/dashboard',
+  '/update-password',
+]
+
+const nextParam = requestUrl.searchParams.get('next')
+
+const next = allowedPaths.includes(nextParam ?? '')
+  ? nextParam!
+  : '/dashboard'
 
   if (code) {
     const supabase = await createClient()
