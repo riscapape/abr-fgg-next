@@ -19,7 +19,7 @@ import { calculateOA } from '@/lib/gpro/formulas'
 const DAY_MS = 86_400_000
 const APP_TIMEZONE = 'America/Sao_Paulo'
 
-// "Agora" com os campos de parede = horário de Brasília
+// "Hoje" (YYYY-MM-DD) + hora atual, sempre no fuso de Brasília
 function nowBrazil() {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: APP_TIMEZONE,
@@ -29,27 +29,37 @@ function nowBrazil() {
     hour: '2-digit',
     hourCycle: 'h23'
   }).formatToParts(new Date())
-  const get = (t: string) => Number(parts.find(p => p.type === t)?.value ?? 0)
-  const y = get('year')
-  const m = get('month')
-  const d = get('day')
-  const h = get('hour')
-  return { h, date: new Date(y, m - 1, d) }
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? '0'
+  return {
+    iso: `${get('year')}-${get('month')}-${get('day')}`,
+    hour: Number(get('hour'))
+  }
 }
 
-function parseDate(iso: string): Date {
-  return new Date(`${iso}T00:00:00`)
+// YYYY-MM-DD → ms (meio-dia UTC: seguro p/ formatar em QUALQUER fuso)
+function isoToMs(iso: string): number {
+  const [y, m, d] = iso.split('-').map(Number)
+  return Date.UTC(y, m - 1, d, 12)
 }
 
-function formatFull(d: Date): string {
-  return d.toLocaleDateString('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
+// Exibição completa sem depender do fuso do servidor
+function formatFull(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString('pt-BR', {
+    timeZone: APP_TIMEZONE,
     weekday: 'long',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   })
 }
+
+// dd/mm direto da string (sem Date nenhum)
+function fmtDayMonth(iso: string): string {
+  return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
+}
+
+
 
 function daysLabel(days: number): string {
   if (days < 0) return 'Concluída'
@@ -118,25 +128,24 @@ export default async function DashboardPage() {
   }
 
     const now = nowBrazil()
-  const today = now.date
 
-  // "Dia de corrida" = dia que TEM corrida no calendário (não depende de ter/sex)
-  const hasRaceToday = races.some(
-    r => r.race_date && parseDate(r.race_date).getTime() === today.getTime()
-  )
-  // Só depois das 17h BRT de um dia de corrida ela "vira"
-  const raceDayPassed = hasRaceToday && now.h >= 17
+
+  const { iso: today, hour } = nowBrazil()
+  const todayMs = isoToMs(today)
+
+  // Dia de corrida = dia que TEM corrida no calendário; vira só após 17h BRT
+  const hasRaceToday = races.some(r => r.race_date === today)
+  const raceDayPassed = hasRaceToday && hour >= 17
 
   const nextRace =
     races.find(r => {
       if (!r.race_date) return false
-      const rd = parseDate(r.race_date).getTime()
-      if (rd === today.getTime() && raceDayPassed) return false // corrida de hoje já passou
-      return rd >= today.getTime()
+      if (r.race_date === today && raceDayPassed) return false
+      return isoToMs(r.race_date) >= todayMs
     }) ?? null
 
   const nextDays = nextRace?.race_date
-    ? Math.round((parseDate(nextRace.race_date).getTime() - today.getTime()) / DAY_MS)
+    ? Math.round((isoToMs(nextRace.race_date) - todayMs) / DAY_MS)
     : null
 
 
@@ -187,7 +196,7 @@ export default async function DashboardPage() {
                   {nextRace.track?.name}
                 </CardTitle>
                 <CardDescription>
-                  {nextRace.track?.country} • {formatFull(parseDate(nextRace.race_date))} •{' '}
+                  {nextRace.track?.country} • {formatFull(nextRace.race_date)} •{' '}
                   <span className="font-semibold text-foreground">
                     {nextDays != null ? daysLabel(nextDays) : ''}
                   </span>
@@ -274,11 +283,10 @@ export default async function DashboardPage() {
               <p className="text-sm text-muted-foreground">Nenhuma corrida cadastrada.</p>
             ) : (
               <div className="grid gap-2 sm:grid-cols-2">
-                {races.map(r => {
-                  const d = r.race_date ? parseDate(r.race_date) : null
-                  const days = d
-  ? Math.round((d.getTime() - today.getTime()) / DAY_MS)
-  : null
+                  {races.map(r => {
+                  const days = r.race_date
+                    ? Math.round((isoToMs(r.race_date) - todayMs) / DAY_MS)
+                    : null
                   const isNext = nextRace && r.race_number === nextRace.race_number
 
                   return (
